@@ -1,0 +1,2 @@
+"""Verona package.
+"""

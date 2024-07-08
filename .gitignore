@@ -1,0 +1,13 @@
+.venv
+.vscode
+.pytest_cache
+dist
+build
+**/__pycache__
+**/*.egg-info
+*.vcf
+test_vcf_data.txt
+*.vcf.gz
+*.vcf.gz.tbi
+out.*
+test.py
