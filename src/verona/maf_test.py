@@ -41,7 +41,7 @@ class TestMafInInfo(fake_vcf.TestWithTempDir):
             self.assertAlmostEqual(maf.maf_from_info(records[0]), 0.5)
 
     def test_maf_missing_from_info(self):
-        """Tests MAF in INFO field."""
+        """Tests MAF in INFO field first missing then filling it."""
         fake = fake_vcf.FakeVcfFile(self.path)
         fake.add_records(
             [
@@ -60,6 +60,11 @@ class TestMafInInfo(fake_vcf.TestWithTempDir):
             records = list(vcf)
             self.assertEqual(len(records), 1)
             self.assertRaises(KeyError, maf.maf_from_info, records[0])
+        # fill in the MAF tag with bcftools
+        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            records = list(vcf)
+            self.assertEqual(len(records), 1)
+            self.assertAlmostEqual(maf.maf_from_info(records[0]), 0.5)
 
 
 class TestMafFromFr(fake_vcf.TestWithTempDir):
@@ -69,7 +74,7 @@ class TestMafFromFr(fake_vcf.TestWithTempDir):
         fake = fake_vcf.FakePlatypusVcfFile(self.path)
         fake.add_records_from_lines(
             """\
-1	1158631	.	A	G	2965	PASS	BRF=0.16;FR=1.0000;HP=1;HapScore=1;MGOF=3;MMLQ=33;MQ=59.75;NF=89;NR=67;PP=2965;QD=20;SC=CACTTTCCTCATCCACTTTGA;SbPval=0.58;Source=Platypus;TC=160;TCF=90;TCR=70;TR=156;WE=1158639;WS=1158621	GT:GL:GOF:GQ:NR:NV	1/1:-300.0,-43.88,0.0:3:99:160:156\
+1\t1158631\t.\tA\tG\t2965\tPASS\tBRF=0.16;FR=1.0000;HP=1;HapScore=1;MGOF=3;MMLQ=33;MQ=59.75;NF=89;NR=67;PP=2965;QD=20;SC=CACTTTCCTCATCCACTTTGA;SbPval=0.58;Source=Platypus;TC=160;TCF=90;TCR=70;TR=156;WE=1158639;WS=1158621\tGT:GL:GOF:GQ:NR:NV\t1/1:-300.0,-43.88,0.0:3:99:160:156
 """
         )
         fake.write_vcf()
@@ -124,3 +129,163 @@ class TestMafFromFr(fake_vcf.TestWithTempDir):
                 self.assertNotAlmostEqual(
                     maf.maf_from_fr(record), maf.maf_from_info(record)
                 )
+
+
+class TestMafFromSamples(fake_vcf.TestWithTempDir):
+
+    def test_maf_from_one_sample_biallelic(self):
+        """Tests MAF in INFO field."""
+        fake = fake_vcf.FakeVcfFile(
+            self.path,
+            samples=["sample1"],
+            records=[
+                {
+                    "pos": 100,
+                    "qual": 200,
+                    "alleles": ("A", "G"),
+                    "info": {"DP": 100},
+                    "samples": [{"GT": (0, 1)}],
+                },
+            ],
+        )
+        fake.write_vcf()
+        self.assertTrue(fake.path.exists())
+        with pysam.VariantFile(fake.path) as vcf:
+            records = list(vcf)
+            self.assertEqual(len(records), 1)
+            self.assertAlmostEqual(maf.maf_from_samples(records[0]), 0.5)
+
+    def test_maf_from_multi_sample_biallelic(self):
+        """Tests MAF in INFO field."""
+        fake = fake_vcf.FakeVcfFile(
+            self.path,
+            samples=["sample1", "sample2", "sample3"],
+            records=[
+                {
+                    "pos": 100,
+                    "qual": 200,
+                    "alleles": ("A", "G"),
+                    "info": {"DP": 100},
+                    "samples": [{"GT": (0, 1)}, {"GT": (1, 1)}, {"GT": (1, 1)}],
+                },
+            ],
+        )
+        fake.write_vcf()
+        self.assertTrue(fake.path.exists())
+        with pysam.VariantFile(fake.path) as vcf:
+            records = list(vcf)
+            self.assertEqual(len(records), 1)
+            calculated_maf = maf.maf_from_samples(records[0])
+            # The expected MAF is 1/6 because of the 6 observed alleles in the
+            # three samples, the allele frequencies are 5/6 and 1/6 and 1/6 is
+            # the second highest.
+            expected_maf = 1 / 6
+            self.assertAlmostEqual(calculated_maf, expected_maf)
+        # Check agreement with bcftools
+        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            records = list(vcf)
+            self.assertEqual(len(records), 1)
+            self.assertAlmostEqual(
+                maf.maf_from_samples(records[0]),
+                maf.maf_from_info(records[0]),
+                places=5,
+            )
+
+    def test_maf_from_multi_sample_multiallelic(self):
+        """Tests MAF with five samples and three alleles."""
+        fake = fake_vcf.FakeVcfFile(
+            self.path,
+            samples=["sample1", "sample2", "sample3", "sample4", "sample5"],
+            records=[
+                {
+                    "pos": 100,
+                    "qual": 200,
+                    "alleles": ("A", "G", "C"),
+                    "info": {"DP": 100},
+                    "samples": [
+                        {"GT": (0, 1)},
+                        {"GT": (1, 1)},
+                        {"GT": (1, 2)},
+                        {"GT": (1, 1)},
+                        {"GT": (1, 2)},
+                    ],
+                },
+            ],
+        )
+        # Allele frequencies are:
+        # A: 1/10
+        # G: 7/10
+        # C: 2/10
+        # so the MAF (second-highest) is 2/10 = 1/5
+        fake.write_vcf()
+        with pysam.VariantFile(fake.path) as vcf:
+            records = list(vcf)
+            self.assertEqual(len(records), 1)
+            calculated_maf = maf.maf_from_samples(records[0])
+            # The expected MAF is 1/6 because of the 6 observed alleles in the
+            # three samples, the allele frequencies are 5/6 and 1/6 and 1/6 is
+            # the second highest.
+            expected_maf = 1 / 5
+            self.assertAlmostEqual(calculated_maf, expected_maf)
+        # Check agreement with bcftools
+        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            records = list(vcf)
+            self.assertEqual(len(records), 1)
+            self.assertAlmostEqual(
+                maf.maf_from_samples(records[0]),
+                maf.maf_from_info(records[0]),
+                places=5,
+            )
+
+    def test_maf_from_one_sample_missing_gt(self):
+        """Tests trying to calculate MAF on samples missing GT."""
+        fake = fake_vcf.FakeVcfFile(self.path)
+        header = pysam.VariantHeader()
+        header.add_line("##fileformat=VCFv4.2")
+        header.contigs.add("1", 1000)
+        header.add_meta(
+            "INFO",
+            items=[
+                ("ID", "DP"),
+                ("Number", "1"),
+                ("Type", "Integer"),
+                ("Description", "Total Depth"),
+            ],
+        )
+        header.add_meta(
+            "FORMAT",
+            items=[
+                ("ID", "NR"),
+                ("Number", "1"),
+                ("Type", "Integer"),
+                (
+                    "Description",
+                    "Number of reads covering variant location in this sample",
+                ),
+            ],
+        )
+        header.add_samples(["sample"])
+        fake.header = header
+        fake.add_records(
+            [
+                {
+                    "pos": 100,
+                    "qual": 200,
+                    "alleles": ("A", "G"),
+                    "info": {"DP": 100},
+                    "samples": [{"NR": 300}],
+                },
+            ]
+        )
+        fake.write_vcf()
+        self.assertTrue(fake.path.exists())
+        with pysam.VariantFile(fake.path) as vcf:
+            records = list(vcf)
+            self.assertEqual(len(records), 1)
+            self.assertRaises(KeyError, maf.maf_from_samples, records[0])
+        # Note that bcftools only warns if the GT field is missing.
+        # It'll then make a VCF with invalid MAF values, which isn't great.
+        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            records = list(vcf)
+            with self.assertRaisesRegex(KeyError, "Invalid INFO field: MAF"):
+                maf.maf_from_info(records[0])

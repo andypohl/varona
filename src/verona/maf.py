@@ -5,6 +5,8 @@ a VFC file.
 
 """
 
+import collections
+
 import pysam
 
 
@@ -50,3 +52,15 @@ def maf_from_samples(variant: pysam.VariantRecord) -> float:
     :return: The MAF value.
     :raises: KeyError if the "GT" key is not found in the samples section.
     """
+    var_allele_count = len(variant.alleles)
+    samp_allele_counts = collections.Counter()
+    # for some reason, iterating over samples just gives the sample name
+    for ix in range(len(variant.samples)):
+        samp_allele_counts.update(variant.samples[ix]["GT"])
+    num_alleles = samp_allele_counts.total()
+    af_list = [
+        float(samp_allele_counts.get(i, 0)) / float(num_alleles)
+        for i in range(var_allele_count)
+    ]
+    af_list.sort(reverse=True)
+    return af_list[1]
