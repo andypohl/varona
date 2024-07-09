@@ -15,17 +15,19 @@ In one case, the file mimics a Platypus VCF file, which has an older VCF format
     
 """
 
+import importlib.resources as pkg_resources
 import pathlib
-import pysam
-import unittest
 import shutil
 import tempfile
+import unittest
+
+import pysam
 
 
 class FakeVcfFile:
     """Make a minimal fake VCF files for testing.
 
-    Unlike the `class:pysam.AlignedSegment` class, the `class:pysam.VariantRecord`
+    Unlike the :class:`pysam.AlignedSegment` class, the :class:`pysam.VariantRecord`
     class lacks `from_dict` and `fromstring` convenience methods. This class
     provides a way to create and add to minimal VCF files for testing.
     """
@@ -40,16 +42,7 @@ class FakeVcfFile:
         self.make_header()
         self.header.add_samples(samples)
         self.records = []
-        for record in records:
-            if "pos" in record:
-                record["start"] = record.pop("pos")
-                record["stop"] = record["start"]
-                record["start"] -= 1
-            record.setdefault("contig", "1")
-            record.setdefault("id", ".")
-            record.setdefault("qual", 100)
-            record.setdefault("filter", "PASS")
-            self.records.append(self.header.new_record(**record))
+        self.add_records(records)
 
     def make_header(self):
         """Add a basic header to the VCF file."""
@@ -75,6 +68,19 @@ class FakeVcfFile:
             ],
         )
         self.header = header
+
+    def add_records(self, records: list[dict]):
+        """Add records to the VCF file."""
+        for record in records:
+            if "pos" in record:
+                record["start"] = record.pop("pos")
+                record["stop"] = record["start"]
+                record["start"] -= 1
+            record.setdefault("contig", "1")
+            record.setdefault("id", ".")
+            record.setdefault("qual", 100)
+            record.setdefault("filter", "PASS")
+            self.records.append(self.header.new_record(**record))
 
     def write_vcf(self):
         """Write the VCF file with the header and records."""
@@ -145,8 +151,32 @@ class FakePlatypusVcfFile(FakeVcfFile):
         header = pysam.VariantHeader()
         for line in self.header_preamble.split("\n"):
             header.add_line(line)
-        header.contigs.add("1", 1000)
+        with pkg_resources.open_text("verona.data", "human_g1k_v37.fasta.fai") as f:
+            for line in f:
+                name, length = line.split("\t")[:2]
+                header.contigs.add(name, length)
         self.header = header
+
+    def add_records_from_lines(self, lines):
+        """Add records to the VCF file from a list of lines.
+
+        These lines are expected to be in the format of a Platypus VCF file and
+        may be copy/pasted from a real file.
+
+        One note is that the this method writes a temporary file for the sake
+        of parsing the records into memory. This is a bit silly, but it works.
+        """
+        with tempfile.TemporaryDirectory() as tempdir:
+            tmp_path = pathlib.Path(tempdir) / "temp.vcf"
+            cur_records = self.records
+            self.records = []
+            self.write_vcf(rewrite=True)
+            shutil.copy(self.path, tmp_path)
+            self.path.unlink()
+            with tmp_path.open("a", encoding="utf-8") as f:
+                f.write(lines)
+            with pysam.VariantFile(str(tmp_path)) as vcf:
+                self.records.extend(list(vcf))
 
     def write_vcf(self, rewrite=True):
         """Write the VCF file with the header and records.
@@ -157,6 +187,8 @@ class FakePlatypusVcfFile(FakeVcfFile):
 
         In the Platypus VCF, pysam seems to ignore the fileformat line, and otherwise writes
         out in a different order as the test file.
+
+        :param rewrite: If True, rewrite the file to ensure the header is correct.
         """
         super().write_vcf()
         if rewrite:
