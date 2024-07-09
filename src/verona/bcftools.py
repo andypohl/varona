@@ -48,10 +48,18 @@ def run_bcftools_fill_tags(
 
 
 class VariantFileFilledInTags(pysam.VariantFile):
+    """A subclass of :class:`pysam.VariantFile` that fills in tags using bcftools.
 
-    def __init__(self, filename, mode, fillin_tags: list[str], *args, **kwargs):
-        if mode != "r":
-            raise NotImplementedError("Only VCF read mode is supported (currently).")
+    It'll preprocess the original VCF before opening the processed VCF.
+
+    :param filename: Path to the VCF file.
+    :param fillin_tags: List of tags to fill in the VCF file.
+    :param *args: Additional arguments to pass to :class:`pysam.VariantFile`.
+    :param **kwargs: Additional keyword arguments to pass to :class:`pysam.VariantFile`.
+    :raises RuntimeError: If bcftools isn't available on the path.
+    """
+
+    def __init__(self, filename, fillin_tags: list[str], *args, **kwargs):
         if not HAVE_BCFTOOLS:
             raise RuntimeError(
                 "Non-pysam bcftools is needed for preprocess operations."
@@ -64,7 +72,7 @@ class VariantFileFilledInTags(pysam.VariantFile):
         pysam.tabix_index(str(compressed), preset="vcf")
         processed = self.tmp_dir / "processed.vcf.gz"
         run_bcftools_fill_tags(compressed, processed, fillin_tags)
-        super().__init__(processed, mode, *args, **kwargs)
+        super().__init__(processed, "r", *args, **kwargs)
 
     def close(self):
         super().close()
