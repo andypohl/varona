@@ -14,5 +14,5 @@ the following command:
 
 .. code-block:: bash
 
-    $ pip install --extra-index-url https://pypi.pohl.io varona
+    $ pip install --extra-index-url https://pypi.pohl.io/simple/ varona
 
