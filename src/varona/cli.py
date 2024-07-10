@@ -35,7 +35,7 @@ def main():
         type=ensembl.Assembly,
         choices=list(ensembl.Assembly),
         default=ensembl.Assembly.GRCh37,
-        help="genome assembly used in VEP API (default: GRCh37)",
+        help="genome assembly used in Ensembl VEP API (default: GRCh37)",
     )
     parser.add_argument(
         "--maf",
@@ -44,13 +44,12 @@ def main():
         default=maf.MafMethod.SAMPLES,
         help="MAF calculation method (default: SAMPLES)",
     )
-    # Parse the arguments
     args = parser.parse_args()
     # Set the logging level
     logging.basicConfig(level=args.log_level.upper())
     logger.info("varona version: %s", varona.__version__)
-    # Print the parsed arguments
-    df = varona.platypus_vcf_dataframe(args.input_vcf)
+    df = varona.varona_dataframe(args.input_vcf, maf_method=args.maf)
+    logger.info("writing CSV file: %s", str(args.output_csv))
     df.write_csv(args.output_csv)
 
 

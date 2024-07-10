@@ -4,6 +4,7 @@ from unittest import mock
 
 import httpx
 import pysam
+
 from varona import ensembl, extract, fake_vcf
 
 VARONA_LIVE_TESTS = os.getenv("VARONA_LIVE_TESTS", "0") == "1"
@@ -12,6 +13,15 @@ VARONA_LIVE_TESTS = os.getenv("VARONA_LIVE_TESTS", "0") == "1"
 
 
 class TestQueryVepApi(unittest.TestCase):
+    """Tests the :func:`varona.ensembl.query_vep_api` function.
+
+    Still incomplete. More tests are needed.  Needed tests:
+
+    - Code 400 (Bad Request) responses
+    - Code 50x responses
+    - Code 429 responses without Retry-After header
+
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -77,6 +87,7 @@ class TestQueryVepApi(unittest.TestCase):
 
 
 class TestChunkReader(fake_vcf.TestWithTempDir):
+    """Tests the :func:`verona.ensembl.vcf_to_vep_query_data` function works."""
 
     # A few records to test with.
     records = [

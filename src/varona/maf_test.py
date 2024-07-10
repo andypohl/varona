@@ -6,6 +6,7 @@ import unittest
 from unittest import mock
 
 import pysam
+
 from varona import bcftools, fake_vcf, maf
 
 
@@ -21,7 +22,7 @@ class TestMafEnum(unittest.TestCase):
         with mock.patch("varona.bcftools.HAVE_BCFTOOLS", True):
             importlib.reload(maf)
             more_values = set(maf.MafMethod)
-            self.assertSetEqual(more_values - fewer_values, {maf.MafMethod.INFO})
+            self.assertSetEqual(more_values - fewer_values, {maf.MafMethod.BCFTOOLS})
 
 
 class TestMafInInfo(fake_vcf.TestWithTempDir):

@@ -54,16 +54,17 @@ def run_bcftools_fill_tags(
 class VariantFileFilledInTags(pysam.VariantFile):
     """A subclass of :class:`pysam.VariantFile` that fills in tags using bcftools.
 
-    It'll preprocess the original VCF before opening the processed VCF.
+    It'll preprocess the original VCF before opening the processed VCF. The
 
     :param filename: Path to the VCF file.
+    :param _: Ignored mode parameter (always "r" for read-only mode).
     :param fillin_tags: List of tags to fill in the VCF file.
     :param *args: Additional arguments to pass to :class:`pysam.VariantFile`.
     :param **kwargs: Additional keyword arguments to pass to :class:`pysam.VariantFile`.
     :raises RuntimeError: If bcftools isn't available on the path.
     """
 
-    def __init__(self, filename, fillin_tags: list[str], *args, **kwargs):
+    def __init__(self, filename, _, fillin_tags: list[str], *args, **kwargs):
         if not HAVE_BCFTOOLS:
             raise RuntimeError(
                 "Non-pysam bcftools is needed for preprocess operations."

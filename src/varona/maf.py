@@ -8,6 +8,7 @@ a VFC file.
 import collections
 
 import pysam
+
 from varona import bcftools, enum
 
 
@@ -18,7 +19,7 @@ class MafMethod(enum.CiStrEnum):
     # Conditionally add the INFO method if non-pysam bcftools
     # is available.
     if bcftools.HAVE_BCFTOOLS:
-        INFO = enum.auto()
+        BCFTOOLS = enum.auto()
     SAMPLES = enum.auto()
 
 
@@ -76,3 +77,18 @@ def maf_from_samples(variant: pysam.VariantRecord) -> float:
     ]
     af_list.sort(reverse=True)
     return af_list[1]
+
+
+def maf_from_method(variant: pysam.VariantRecord, method: MafMethod) -> float:
+    """Compute the MAF using the specified method.
+
+    :param variant: A :class:`pysam.VariantRecord` object.
+    :param method: The MAF calculation method.
+    :return: The MAF value.
+    :raises: KeyError if the method is not recognized.
+    """
+    if method == MafMethod.FR:
+        return maf_from_fr(variant)
+    elif method == MafMethod.BCFTOOLS:
+        return maf_from_info(variant)
+    return maf_from_samples(variant)
