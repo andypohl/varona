@@ -6,6 +6,7 @@ dist
 build
 **/__pycache__
 **/*.egg-info
+*.csv
 *.vcf
 test_vcf_data.txt
 *.vcf.gz
