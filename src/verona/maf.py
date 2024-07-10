@@ -9,6 +9,19 @@ import collections
 
 import pysam
 
+from verona import bcftools, enum
+
+
+class MafMethod(enum.CiStrEnum):
+    """Enum for the MAF calculation method."""
+
+    FR = enum.auto()
+    # Conditionally add the INFO method if non-pysam bcftools
+    # is available.
+    if bcftools.HAVE_BCFTOOLS:
+        INFO = enum.auto()
+    SAMPLES = enum.auto()
+
 
 def maf_from_fr(variant: pysam.VariantRecord) -> float:
     """Compute the MAF from the "FR" info value in a variant.

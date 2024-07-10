@@ -14,6 +14,14 @@ VERONA_LIVE_TESTS = os.getenv("VERONA_LIVE_TESTS", "0") == "1"
 
 class TestQueryVepApi(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        cls.client = httpx.Client()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.client.close()
+
     # A chunk of two records that'll be ignored anyway.
     chunk = [
         "1 1158631 . A G . . .",
@@ -31,42 +39,42 @@ class TestQueryVepApi(unittest.TestCase):
     )
     response_200 = httpx.Response(status_code=200, json={"data": "success"})
 
-    @mock.patch("httpx.post")
     @mock.patch("time.sleep", return_value=None)  # disable sleeping
-    def test_query_and_retries(self, mock_sleep, mock_post):
-        mock_post.side_effect = [self.response_429, self.response_200]
-        # Call the function
-        with self.assertLogs("verona.ensembl", level="WARNING") as cm:
-            result = ensembl.query_vep_api(chunk=self.chunk)
-            self.assertEqual(len(cm.output), 1)  # Verify warning message
-            self.assertEqual(
-                cm.output[0],
-                "WARNING:verona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
-            )
-        self.assertEqual(result, {"data": "success"})  # Verify the result
-        self.assertEqual(mock_post.call_count, 2)  # Verify two API calls (retry)
-        mock_sleep.assert_called_once_with(1)  # Verify retry delay
-
-    @mock.patch("httpx.post")
-    @mock.patch("time.sleep", return_value=None)  # disable sleeping
-    def test_too_many_retries(self, mock_sleep, mock_post):
-        mock_post.side_effect = [
-            self.response_429,  # mock response 1
-            self.response_429,  # mock response 2
-            self.response_429,  # mock response 3
-            self.response_200,  # (doesn't get this far)
-        ]
-        # Call the function
-        with self.assertLogs("verona.ensembl", level="WARNING") as cm:
-            with self.assertRaises(TimeoutError):
-                ensembl.query_vep_api(chunk=self.chunk, retries=2)
-            self.assertEqual(len(cm.output), 3)  # Verify warning message
-            for i in range(2):
+    def test_query_and_retries(self, mock_sleep):
+        with mock.patch.object(self.client, "post") as mock_post:
+            mock_post.side_effect = [self.response_429, self.response_200]
+            # Call the function
+            with self.assertLogs("verona.ensembl", level="WARNING") as cm:
+                result = ensembl.query_vep_api(self.client, chunk=self.chunk)
+                self.assertEqual(len(cm.output), 1)  # Verify warning message
                 self.assertEqual(
-                    cm.output[i],
+                    cm.output[0],
                     "WARNING:verona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
                 )
-        self.assertEqual(mock_post.call_count, 3)
+            self.assertEqual(result, {"data": "success"})  # Verify the result
+            self.assertEqual(mock_post.call_count, 2)  # Verify two API calls (retry)
+            mock_sleep.assert_called_once_with(1)  # Verify retry delay
+
+    @mock.patch("time.sleep", return_value=None)  # disable sleeping
+    def test_too_many_retries(self, _):
+        with mock.patch.object(self.client, "post") as mock_post:
+            mock_post.side_effect = [
+                self.response_429,  # mock response 1
+                self.response_429,  # mock response 2
+                self.response_429,  # mock response 3
+                self.response_200,  # (doesn't get this far)
+            ]
+            # Call the function
+            with self.assertLogs("verona.ensembl", level="WARNING") as cm:
+                with self.assertRaises(TimeoutError):
+                    ensembl.query_vep_api(self.client, chunk=self.chunk, retries=2)
+                self.assertEqual(len(cm.output), 3)  # Verify warning message
+                for i in range(2):
+                    self.assertEqual(
+                        cm.output[i],
+                        "WARNING:verona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
+                    )
+            self.assertEqual(mock_post.call_count, 3)
 
 
 class TestChunkReader(fake_vcf.TestWithTempDir):
@@ -170,6 +178,14 @@ class TestLiveQuerying(unittest.TestCase):
     require opting-in by setting the environment variable `VERONA_LIVE_TESTS=1`.
     """
 
+    @classmethod
+    def setUpClass(cls):
+        cls.client = httpx.Client()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.client.close()
+
     def test_two_records(self):
         """Tests querying the Ensembl API with two records."""
         chunk = [
@@ -177,7 +193,9 @@ class TestLiveQuerying(unittest.TestCase):
             "1 91859795 . TATGTGA CATGTGA,CATGTGG . . .",  # > 2 alleles
         ]
         data = ensembl.query_vep_api(
-            chunk, response_extractor=extract.default_vep_response_extractor
+            self.client,
+            chunk,
+            response_extractor=extract.default_vep_response_extractor,
         )
         self.assertEqual(len(data), 2)
         expected = [

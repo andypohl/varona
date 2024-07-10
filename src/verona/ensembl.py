@@ -6,7 +6,6 @@ the data for querying the Ensembl API.
 
 import contextlib
 import csv
-import enum
 import io
 import json
 import logging
@@ -17,10 +16,12 @@ import typing
 import httpx
 import pysam
 
+from verona import enum
+
 logger = logging.getLogger("verona.ensembl")
 
 
-class Assembly(enum.Enum):
+class Assembly(enum.CiStrEnum):
     """Enum for the assembly choice.
 
     There are only two choices for now, GRCh37 and GRCh38.
@@ -35,6 +36,8 @@ VEP_DEFAULT_PARAMS = {
     "variant_class": True,
     "pick": True,
 }
+
+VEP_MAX_CHUNK = 200
 
 HTS_COMPRESSED_VALS = ("GZIP", "BGZF")
 """Possible values for the compression field in a :class:`pysam.VariantFile`.
@@ -94,13 +97,16 @@ def vcf_rows(vcf_path: pathlib.Path) -> typing.Iterator[list[str]]:
 
 
 def vcf_to_vep_query_data(
-    vcf_path: pathlib.Path, chunk_size=1000
+    vcf_path: pathlib.Path, chunk_size=VEP_MAX_CHUNK
 ) -> typing.Iterator[list[str]]:
     """Gets lists of data in chunks from the VCF file for querying the Ensembl API.
 
     This is tailored to provide input to the
     `POST vep/:species/region <https://rest.ensembl.org/documentation/info/vep_region_post>`_
     endpoint.
+
+    :param vcf_path: Path to the VCF file.
+    :param chunk_size: Maximum number of variants to include in each chunk.
     """
     chunk = []
     for row in vcf_rows(vcf_path):
@@ -115,7 +121,8 @@ def vcf_to_vep_query_data(
 
 
 def query_vep_api(
-    chunk,
+    client: httpx.Client,
+    chunk: list[str],
     assembly: Assembly = Assembly.GRCh37,
     retries=3,
     params: dict | None = VEP_DEFAULT_PARAMS,
@@ -125,7 +132,7 @@ def query_vep_api(
 
     The API endpoint is `POST vep/:species/region
     <https://rest.ensembl.org/documentation/info/vep_region_post>`_. The API has
-    several limits on this endpoint, including a maximum of 1000 variants per
+    several limits on this endpoint, including a maximum of 200 variants per
     request, and may return a 429 status code if the rate limit is exceeded.  This
     function can retry the request multiple times, using the Retry-After header if
     it's present to delay the next request.
@@ -135,7 +142,7 @@ def query_vep_api(
     the asynchronous client.  A future version of this function may use the
     asynchronous client to improve performance.
 
-    :param chunk: List of (up to 1000) strings from the VCF file.  See
+    :param chunk: List of (up to 200) strings from the VCF file.  See
         :func:`get_vcf_query_data` for the format of these strings.
     :param assembly: Assembly to use for the API query, by default GRCh37.
     :param retries: Number of times to retry the API call if it returns a 429 status
@@ -157,7 +164,7 @@ def query_vep_api(
     data = json.dumps({"variants": chunk})
     retried = 0
     while retried <= retries:
-        response = httpx.post(url, headers=headers, data=data, params=params)
+        response = client.post(url, headers=headers, data=data, params=params)
         if response.status_code == 200:
             items = response.json()
             if response_extractor:

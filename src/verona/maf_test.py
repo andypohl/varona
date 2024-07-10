@@ -1,11 +1,28 @@
 """Tests for the maf module.
 """
 
+import importlib
 import unittest
+from unittest import mock
 
 import pysam
 
 from verona import bcftools, fake_vcf, maf
+
+
+class TestMafEnum(unittest.TestCase):
+
+    def test_bcftools_missing(self):
+        """Test the enum is reduced without bcftools."""
+        more_values = set()
+        fewer_values = set()
+        with mock.patch("verona.bcftools.HAVE_BCFTOOLS", False):
+            importlib.reload(maf)
+            fewer_values = set(maf.MafMethod)
+        with mock.patch("verona.bcftools.HAVE_BCFTOOLS", True):
+            importlib.reload(maf)
+            more_values = set(maf.MafMethod)
+            self.assertSetEqual(more_values - fewer_values, {maf.MafMethod.INFO})
 
 
 class TestMafInInfo(fake_vcf.TestWithTempDir):
@@ -60,11 +77,13 @@ class TestMafInInfo(fake_vcf.TestWithTempDir):
             records = list(vcf)
             self.assertEqual(len(records), 1)
             self.assertRaises(KeyError, maf.maf_from_info, records[0])
-        # fill in the MAF tag with bcftools
-        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
-            records = list(vcf)
-            self.assertEqual(len(records), 1)
-            self.assertAlmostEqual(maf.maf_from_info(records[0]), 0.5)
+        # put this in a new test soon. unittests shouldn't have if statements
+        if bcftools.HAVE_BCFTOOLS:
+            # fill in the MAF tag with bcftools
+            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+                records = list(vcf)
+                self.assertEqual(len(records), 1)
+                self.assertAlmostEqual(maf.maf_from_info(records[0]), 0.5)
 
 
 class TestMafFromFr(fake_vcf.TestWithTempDir):
@@ -95,12 +114,14 @@ class TestMafFromFr(fake_vcf.TestWithTempDir):
         )
         fake.write_vcf()
         self.assertTrue(fake.path.exists())
-        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
-            records = list(vcf)
-            self.assertEqual(len(records), 1)
-            self.assertAlmostEqual(
-                maf.maf_from_fr(records[0]), maf.maf_from_info(records[0])
-            )
+        # put this in a new test soon. unittests shouldn't have if statements
+        if bcftools.HAVE_BCFTOOLS:
+            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+                records = list(vcf)
+                self.assertEqual(len(records), 1)
+                self.assertAlmostEqual(
+                    maf.maf_from_fr(records[0]), maf.maf_from_info(records[0])
+                )
 
     @unittest.skipUnless(bcftools.HAVE_BCFTOOLS, "bcftools not found")
     def test_maf_from_fr_bcftools_disagreement(self):
@@ -181,15 +202,17 @@ class TestMafFromSamples(fake_vcf.TestWithTempDir):
             # the second highest.
             expected_maf = 1 / 6
             self.assertAlmostEqual(calculated_maf, expected_maf)
-        # Check agreement with bcftools
-        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
-            records = list(vcf)
-            self.assertEqual(len(records), 1)
-            self.assertAlmostEqual(
-                maf.maf_from_samples(records[0]),
-                maf.maf_from_info(records[0]),
-                places=5,
-            )
+        # put this in a new test soon. unittests shouldn't have if statements
+        if bcftools.HAVE_BCFTOOLS:
+            # Check agreement with bcftools
+            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+                records = list(vcf)
+                self.assertEqual(len(records), 1)
+                self.assertAlmostEqual(
+                    maf.maf_from_samples(records[0]),
+                    maf.maf_from_info(records[0]),
+                    places=5,
+                )
 
     def test_maf_from_multi_sample_multiallelic(self):
         """Tests MAF with five samples and three alleles."""
@@ -227,15 +250,17 @@ class TestMafFromSamples(fake_vcf.TestWithTempDir):
             # the second highest.
             expected_maf = 1 / 5
             self.assertAlmostEqual(calculated_maf, expected_maf)
-        # Check agreement with bcftools
-        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
-            records = list(vcf)
-            self.assertEqual(len(records), 1)
-            self.assertAlmostEqual(
-                maf.maf_from_samples(records[0]),
-                maf.maf_from_info(records[0]),
-                places=5,
-            )
+        # put this in a new test soon. unittests shouldn't have if statements
+        if bcftools.HAVE_BCFTOOLS:
+            # Check agreement with bcftools
+            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+                records = list(vcf)
+                self.assertEqual(len(records), 1)
+                self.assertAlmostEqual(
+                    maf.maf_from_samples(records[0]),
+                    maf.maf_from_info(records[0]),
+                    places=5,
+                )
 
     def test_maf_from_one_sample_missing_gt(self):
         """Tests trying to calculate MAF on samples missing GT."""
@@ -284,8 +309,11 @@ class TestMafFromSamples(fake_vcf.TestWithTempDir):
             self.assertEqual(len(records), 1)
             self.assertRaises(KeyError, maf.maf_from_samples, records[0])
         # Note that bcftools only warns if the GT field is missing.
-        # It'll then make a VCF with invalid MAF values, which isn't great.
-        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
-            records = list(vcf)
-            with self.assertRaisesRegex(KeyError, "Invalid INFO field: MAF"):
-                maf.maf_from_info(records[0])
+        # put this in a new test soon. unittests shouldn't have if statements
+        if bcftools.HAVE_BCFTOOLS:
+            # It'll then make a VCF with invalid MAF values, which isn't great.
+            # Check agreement with bcftools
+            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+                records = list(vcf)
+                with self.assertRaisesRegex(KeyError, "Invalid INFO field: MAF"):
+                    maf.maf_from_info(records[0])

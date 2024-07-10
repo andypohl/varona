@@ -1,4 +1,10 @@
-"""Module for extracting majority of the data from VCF files.
+"""Module with functions for extracting data from lower-level structures.
+
+This module contains functions that can be used to extract data from
+lower-level structures like VCF records and VEP API responses (dictionaries).
+These functions are called from the Verona top-level functions in the
+:mod:`verona.verona` module and can be replaced with custom functions 
+when using those, if desired.
 """
 
 import logging
@@ -44,15 +50,22 @@ def default_vep_response_extractor(response_item: dict) -> dict:
     new_item["alt"] = ",".join(alleles[1:])
     new_item["type"] = response_item["variant_class"]
     new_item["effect"] = response_item["most_severe_consequence"]
-    new_item["gene_name"] = response_item["transcript_consequences"][0]["gene_symbol"]
-    new_item["gene_id"] = response_item["transcript_consequences"][0]["gene_id"]
-    new_item["transcript_id"] = response_item["transcript_consequences"][0][
-        "transcript_id"
-    ]
+    if "transcript_consequences" not in response_item:
+        new_item["gene_name"] = None
+        new_item["gene_id"] = None
+        new_item["transcript_id"] = None
+    else:
+        new_item["gene_name"] = response_item["transcript_consequences"][0][
+            "gene_symbol"
+        ]
+        new_item["gene_id"] = response_item["transcript_consequences"][0]["gene_id"]
+        new_item["transcript_id"] = response_item["transcript_consequences"][0][
+            "transcript_id"
+        ]
     return new_item
 
 
-def default_vcf_record_extractor(
+def platypus_vcf_record_extractor(
     record: pysam.VariantRecord,
     **addl_cols: typing.Callable[[pysam.VariantRecord], typing.Union[int, float, str]]
 ) -> dict:
@@ -62,6 +75,13 @@ def default_vcf_record_extractor(
     new_item["pos"] = record.pos
     new_item["ref"] = record.ref
     new_item["alt"] = ",".join(record.alts)
+    new_item["sequence_depth"] = record.info["TC"]  # in some VCFs this is "DP"
+    # for multiallelic TR is a list of the number of reads supporting each allele
+    # so the max is taken.
+    new_item["max_variant_reads"] = max(record.info["TR"])
+    new_item["variant_read_pct"] = (
+        new_item["max_variant_reads"] / new_item["sequence_depth"] * 100
+    )
     for col, func in addl_cols.items():
         new_item[col] = func(record)
     return new_item

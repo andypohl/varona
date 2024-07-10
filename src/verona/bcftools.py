@@ -1,6 +1,7 @@
 """Module specifically for using (non-pysam) bcftools.
 """
 
+import os
 import pathlib
 import shutil
 import subprocess
@@ -8,7 +9,10 @@ import tempfile
 
 import pysam
 
-HAVE_BCFTOOLS = shutil.which("bcftools") is not None
+HAVE_BCFTOOLS = (
+    shutil.which("bcftools") is not None
+    and os.getenv("VERONA_DISABLE_BCFTOOLS", "0") != "1"
+)
 """True if the bcftools command is available on the system."""
 
 ALLOWED_TAGS = {"AN", "AC", "AF", "MAF"}
