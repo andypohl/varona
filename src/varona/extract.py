@@ -24,20 +24,6 @@ def default_vep_response_extractor(response_item: dict) -> dict:
     :func:`varona.ensemble.query_vep_api`.  For this specific example, no
     exceptions are caught and so will cause the query to fail.
 
-    Input item (example):
-
-    .. code-block:: json
-
-        {
-        }
-
-    Output item (example):
-
-    .. code-block:: json
-
-        {
-        }
-
     :param response_item: The VEP API response is a list of dictionaries,
         and this is one of the items in the list.
     :return: A dictionary with the VEP data transformed into a preferable format.
