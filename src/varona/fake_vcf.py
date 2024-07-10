@@ -9,9 +9,8 @@ In one case, the file mimics a Platypus VCF file, which has an older VCF format
     As of pysam v0.22.1 (April 23, 2024), the VCF header doesn't capture the
     fileformat line correctly sometimes, so when mimicking a Platypus VCF file,
     the file is rewritten with a Platypus-like header and the fileformat
-    is set to v4.0. There is a regression for pysam in case that behvaior
-    changes in the future, in which case the `rewrite=True` parameter can perhaps
-    be flipped to `False`.
+    is set to v4.0. There is a regression test for pysam in case that behvaior
+    changes in the future, in which case the rewriting won't be needed.
     
 """
 
@@ -95,7 +94,7 @@ class FakePlatypusVcfFile(FakeVcfFile):
     Platypus VCFs have a different header format than generic VCFs.
     """
 
-    header_preamble = """\
+    _header_preamble = """\
 ##fileformat=VCFv4.0
 ##fileDate=2016-06-21
 ##source=Platypus_Version_0.8.1
@@ -149,7 +148,7 @@ class FakePlatypusVcfFile(FakeVcfFile):
     def make_header(self):
         """Add a Platypus header to the VCF file."""
         header = pysam.VariantHeader()
-        for line in self.header_preamble.split("\n"):
+        for line in self._header_preamble.split("\n"):
             header.add_line(line)
         with pkg_resources.open_text("varona.data", "human_g1k_v37.fasta.fai") as f:
             for line in f:

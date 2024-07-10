@@ -59,8 +59,8 @@ class VariantFileFilledInTags(pysam.VariantFile):
     :param filename: Path to the VCF file.
     :param _: Ignored mode parameter (always "r" for read-only mode).
     :param fillin_tags: List of tags to fill in the VCF file.
-    :param *args: Additional arguments to pass to :class:`pysam.VariantFile`.
-    :param **kwargs: Additional keyword arguments to pass to :class:`pysam.VariantFile`.
+    :param args: Additional arguments to pass to :class:`pysam.VariantFile`.
+    :param kwargs: Additional keyword arguments to pass to :class:`pysam.VariantFile`.
     :raises RuntimeError: If bcftools isn't available on the path.
     """
 

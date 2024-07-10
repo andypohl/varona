@@ -13,7 +13,30 @@ from varona import bcftools, enum
 
 
 class MafMethod(enum.CiStrEnum):
-    """Enum for the MAF calculation method."""
+    """Enum for the MAF calculation method.
+
+    Values:
+
+    +-----------+----------------------------------------------+
+    | Value     | Description                                  |
+    +===========+==============================================+
+    | FR        | Use the FR field in the info section of the  |
+    |           | variant to calculate the MAF.                |
+    +-----------+----------------------------------------------+
+    | BCFTOOLS  | Only available if non-pysam bcftools is      |
+    |           | installed. Use the MAF                       |
+    |           |                                              |
+    |           | field in the info section of the variant to  |
+    |           | calculate the MAF, which                     |
+    |           |                                              |
+    |           | is added by ``bcftools +fill-tags``.         |
+    +-----------+----------------------------------------------+
+    | SAMPLES   | Description of SAMPLES method                |
+    +-----------+----------------------------------------------+
+
+    Note: The BCFTOOLS value is conditionally available based on the
+    presence of non-pysam bcftools.
+    """
 
     FR = enum.auto()
     # Conditionally add the INFO method if non-pysam bcftools
