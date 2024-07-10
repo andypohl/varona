@@ -5,10 +5,10 @@ import argparse
 import logging
 import pathlib
 
-import verona
-from verona import ensembl, maf
+import varona
+from varona import ensembl, maf
 
-logger = logging.getLogger("verona.cli")
+logger = logging.getLogger("varona.cli")
 
 
 def main():
@@ -48,9 +48,9 @@ def main():
     args = parser.parse_args()
     # Set the logging level
     logging.basicConfig(level=args.log_level.upper())
-    logger.info("varona version: %s", verona.__version__)
+    logger.info("varona version: %s", varona.__version__)
     # Print the parsed arguments
-    df = verona.platypus_vcf_dataframe(args.input_vcf)
+    df = varona.platypus_vcf_dataframe(args.input_vcf)
     df.write_csv(args.output_csv)
 
 

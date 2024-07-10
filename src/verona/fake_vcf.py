@@ -151,7 +151,7 @@ class FakePlatypusVcfFile(FakeVcfFile):
         header = pysam.VariantHeader()
         for line in self.header_preamble.split("\n"):
             header.add_line(line)
-        with pkg_resources.open_text("verona.data", "human_g1k_v37.fasta.fai") as f:
+        with pkg_resources.open_text("varona.data", "human_g1k_v37.fasta.fai") as f:
             for line in f:
                 name, length = line.split("\t")[:2]
                 header.contigs.add(name, length)

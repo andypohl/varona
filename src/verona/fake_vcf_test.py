@@ -4,8 +4,7 @@ import tempfile
 import unittest
 
 import pysam
-
-from verona import fake_vcf
+from varona import fake_vcf
 
 
 class TestFakeVcfFiles(fake_vcf.TestWithTempDir):

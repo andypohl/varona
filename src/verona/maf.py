@@ -8,8 +8,7 @@ a VFC file.
 import collections
 
 import pysam
-
-from verona import bcftools, enum
+from varona import bcftools, enum
 
 
 class MafMethod(enum.CiStrEnum):

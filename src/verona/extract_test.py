@@ -1,18 +1,17 @@
 import unittest
 
 import pysam
-
-from verona import extract, fake_vcf, maf
+from varona import extract, fake_vcf, maf
 
 
 class TestExtractApi(unittest.TestCase):
     """Testing the extraction API functions.
 
-    Currenly only for :func:`verona.extract.default_vep_response_extractor`.
+    Currenly only for :func:`varona.extract.default_vep_response_extractor`.
     """
 
     def test_extract_example_responses(self):
-        """Tests the :func:`verona.extract.default_vep_response_extractor` function.
+        """Tests the :func:`varona.extract.default_vep_response_extractor` function.
 
         It's kind of a long copy/paste for test code so it's just one item.
         """
@@ -112,7 +111,7 @@ class TestExtractVcf(fake_vcf.TestWithTempDir):
     """
 
     def test_extract_platypus_vcf(self):
-        """Tests the :func:`verona.extract.platypus_vcf_record_extractor` function."""
+        """Tests the :func:`varona.extract.platypus_vcf_record_extractor` function."""
         fake = fake_vcf.FakePlatypusVcfFile(self.path)
         fake.add_records_from_lines(
             """\

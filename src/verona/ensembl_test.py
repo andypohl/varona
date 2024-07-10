@@ -4,10 +4,9 @@ from unittest import mock
 
 import httpx
 import pysam
+from varona import ensembl, extract, fake_vcf
 
-from verona import ensembl, extract, fake_vcf
-
-VERONA_LIVE_TESTS = os.getenv("VERONA_LIVE_TESTS", "0") == "1"
+VARONA_LIVE_TESTS = os.getenv("VARONA_LIVE_TESTS", "0") == "1"
 """Set to 1 to enable live querying tests for local development.
 """
 
@@ -44,12 +43,12 @@ class TestQueryVepApi(unittest.TestCase):
         with mock.patch.object(self.client, "post") as mock_post:
             mock_post.side_effect = [self.response_429, self.response_200]
             # Call the function
-            with self.assertLogs("verona.ensembl", level="WARNING") as cm:
+            with self.assertLogs("varona.ensembl", level="WARNING") as cm:
                 result = ensembl.query_vep_api(self.client, chunk=self.chunk)
                 self.assertEqual(len(cm.output), 1)  # Verify warning message
                 self.assertEqual(
                     cm.output[0],
-                    "WARNING:verona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
+                    "WARNING:varona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
                 )
             self.assertEqual(result, {"data": "success"})  # Verify the result
             self.assertEqual(mock_post.call_count, 2)  # Verify two API calls (retry)
@@ -65,14 +64,14 @@ class TestQueryVepApi(unittest.TestCase):
                 self.response_200,  # (doesn't get this far)
             ]
             # Call the function
-            with self.assertLogs("verona.ensembl", level="WARNING") as cm:
+            with self.assertLogs("varona.ensembl", level="WARNING") as cm:
                 with self.assertRaises(TimeoutError):
                     ensembl.query_vep_api(self.client, chunk=self.chunk, retries=2)
                 self.assertEqual(len(cm.output), 3)  # Verify warning message
                 for i in range(2):
                     self.assertEqual(
                         cm.output[i],
-                        "WARNING:verona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
+                        "WARNING:varona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
                     )
             self.assertEqual(mock_post.call_count, 3)
 
@@ -170,12 +169,12 @@ class TestChunkReader(fake_vcf.TestWithTempDir):
         self.assertListEqual(chunks[0], expected)
 
 
-@unittest.skipUnless(VERONA_LIVE_TESTS, "Live querying tests are disabled by default.")
+@unittest.skipUnless(VARONA_LIVE_TESTS, "Live querying tests are disabled by default.")
 class TestLiveQuerying(unittest.TestCase):
     """Tests the live Ensembl API.
 
     Normally these should be disabled. They are here for development purposes and
-    require opting-in by setting the environment variable `VERONA_LIVE_TESTS=1`.
+    require opting-in by setting the environment variable `VARONA_LIVE_TESTS=1`.
     """
 
     @classmethod

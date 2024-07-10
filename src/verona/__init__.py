@@ -1,5 +1,5 @@
-"""Verona library for variant annotation from a VCF file.
+"""Varona library for variant annotation from a VCF file.
 """
 
-from verona.__version__ import __version__
-from verona.verona import *
+from varona.__version__ import __version__
+from varona.varona import *

@@ -8,12 +8,12 @@ bcftools isn't available.
 import unittest
 from unittest import mock
 
-from verona import bcftools, fake_vcf
+from varona import bcftools, fake_vcf
 
 
 class TestFillingInTags(fake_vcf.TestWithTempDir):
 
-    @mock.patch("verona.bcftools.HAVE_BCFTOOLS", False)
+    @mock.patch("varona.bcftools.HAVE_BCFTOOLS", False)
     def test_bcftools_missing(self):
         """Test that an error is raised if bcftools isn't available."""
         fake = fake_vcf.FakeVcfFile(self.path)

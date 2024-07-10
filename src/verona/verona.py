@@ -1,4 +1,4 @@
-"""High-level routines for the Verona library.
+"""High-level routines for the Varona library.
 
 All of the functions and classes in this module are imported into the
 top-level library namespace.
@@ -10,10 +10,9 @@ import pathlib
 import httpx
 import polars as pl
 import pysam
+from varona import ensembl, extract, maf
 
-from verona import ensembl, extract, maf
-
-logger = logging.getLogger("verona.verona")
+logger = logging.getLogger("varona.varona")
 
 API_DF_SCHEMA = {
     "contig": pl.Utf8,

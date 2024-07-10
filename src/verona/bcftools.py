@@ -11,7 +11,7 @@ import pysam
 
 HAVE_BCFTOOLS = (
     shutil.which("bcftools") is not None
-    and os.getenv("VERONA_DISABLE_BCFTOOLS", "0") != "1"
+    and os.getenv("VARONA_DISABLE_BCFTOOLS", "0") != "1"
 )
 """True if the bcftools command is available on the system."""
 

@@ -2,8 +2,8 @@
 
 This module contains functions that can be used to extract data from
 lower-level structures like VCF records and VEP API responses (dictionaries).
-These functions are called from the Verona top-level functions in the
-:mod:`verona.verona` module and can be replaced with custom functions 
+These functions are called from the Varona top-level functions in the
+:mod:`varona.varona` module and can be replaced with custom functions 
 when using those, if desired.
 """
 
@@ -12,7 +12,7 @@ import typing
 
 import pysam
 
-logger = logging.getLogger("verona.extract")
+logger = logging.getLogger("varona.extract")
 
 
 def default_vep_response_extractor(response_item: dict) -> dict:
@@ -21,7 +21,7 @@ def default_vep_response_extractor(response_item: dict) -> dict:
     Care should be taken to handle the data in the response with correct
     spelling of keys, indexing, etc. :class:`KeyError` and :class:`IndexError`
     exceptions can either be handled by this function or by the caller to
-    :func:`verona.ensemble.query_vep_api`.  For this specific example, no
+    :func:`varona.ensemble.query_vep_api`.  For this specific example, no
     exceptions are caught and so will cause the query to fail.
 
     Input item (example):

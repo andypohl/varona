@@ -6,8 +6,7 @@ import unittest
 from unittest import mock
 
 import pysam
-
-from verona import bcftools, fake_vcf, maf
+from varona import bcftools, fake_vcf, maf
 
 
 class TestMafEnum(unittest.TestCase):
@@ -16,10 +15,10 @@ class TestMafEnum(unittest.TestCase):
         """Test the enum is reduced without bcftools."""
         more_values = set()
         fewer_values = set()
-        with mock.patch("verona.bcftools.HAVE_BCFTOOLS", False):
+        with mock.patch("varona.bcftools.HAVE_BCFTOOLS", False):
             importlib.reload(maf)
             fewer_values = set(maf.MafMethod)
-        with mock.patch("verona.bcftools.HAVE_BCFTOOLS", True):
+        with mock.patch("varona.bcftools.HAVE_BCFTOOLS", True):
             importlib.reload(maf)
             more_values = set(maf.MafMethod)
             self.assertSetEqual(more_values - fewer_values, {maf.MafMethod.INFO})

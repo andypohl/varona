@@ -15,10 +15,9 @@ import typing
 
 import httpx
 import pysam
+from varona import enum
 
-from verona import enum
-
-logger = logging.getLogger("verona.ensembl")
+logger = logging.getLogger("varona.ensembl")
 
 
 class Assembly(enum.CiStrEnum):
