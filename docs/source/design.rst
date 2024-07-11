@@ -13,9 +13,9 @@ or `GRCh38 <http://rest.ensembl.org/>`_, with GRCh37 being the default),
 and the verbosity of the logging output.
 
 
-===
-API
-===
+==============
+Python Library
+==============
 
 A major design goal with Varona is to have a flexible and extensible
 programmatic interface. Because the output of Varona is a CSV file, the natural
@@ -29,3 +29,27 @@ functions, each of which returns a list of dictionaries each corresponding to
 a DataFrame row. A different approach to callback functions could've been to
 define a base class and let the programmer define subclasses but for this
 version, the callbacks should provide a fair amount of flexibility.
+
+.. figure:: _static/modules.svg
+   :align: center
+   :width: 60%
+
+   Modules in the Varona library and where they roughly lie on the spectrum of low to high level interface.
+
+.. raw:: html
+
+   <br>
+
+===========
+Ensembl API
+===========
+
+The Ensembl API provides auxiliary information about the variants in the VCF file.
+When it comes to the approach for querying their REST API, the approach here is
+to query in 200 variant chunks sequentially without multiple connections, threads,
+or asynchronicity.  For 1 to 50,000 variants, this is a suitable approach.  The
+speed observed tends to be about 10-20 variants per second processed, at least
+using the parameters Varona uses.  If there's a need to process hundreds of
+thousands or millions of variants, then it's worth considering adding some
+parallelism and asynchronous capability.  The `httpx <https://www.python-httpx.org/>`_ library was choseon for
+making the HTTP requests because of its async compatibility as a future option.
