@@ -2,10 +2,34 @@
 """
 
 import enum
+import sys
 from enum import auto
 
 
-class CiStrEnum(enum.StrEnum):
+class BackportStrEnum(str, enum.Enum):
+    """
+    Enum where members are also instances of str.
+
+    This is available in Python 3.11+ so it's a backport for older Python versions.
+    """
+
+    def __new__(cls, *values):
+        if len(values) == 1:
+            value = values[0]
+        else:
+            value = values
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        return obj
+
+
+try:
+    StrEnum = enum.StrEnum
+except AttributeError:
+    StrEnum = BackportStrEnum
+
+
+class CiStrEnum(StrEnum):
     """Gets the enum member by case-insensitive string value.
 
     From Python `docs <https://docs.python.org/3/library/enum.html#enum.Enum._missing_>`_.
