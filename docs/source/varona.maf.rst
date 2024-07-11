@@ -12,6 +12,6 @@ varona.maf
 
 .. autofunction:: varona.maf.maf_from_fr
 
-.. autofunction:: varona.maf.maf_from_info
+.. autofunction:: varona.maf.maf_from_bcftools
 
 .. autofunction:: varona.maf.maf_from_method

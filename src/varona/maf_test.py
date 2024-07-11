@@ -55,7 +55,7 @@ class TestMafInInfo(fake_vcf.TestWithTempDir):
         with pysam.VariantFile(fake.path) as vcf:
             records = list(vcf)
             self.assertEqual(len(records), 1)
-            self.assertAlmostEqual(maf.maf_from_info(records[0]), 0.5)
+            self.assertAlmostEqual(maf.maf_from_bcftools(records[0]), 0.5)
 
     def test_maf_missing_from_info(self):
         """Tests MAF in INFO field first missing then filling it."""
@@ -76,14 +76,14 @@ class TestMafInInfo(fake_vcf.TestWithTempDir):
         with pysam.VariantFile(fake.path) as vcf:
             records = list(vcf)
             self.assertEqual(len(records), 1)
-            self.assertRaises(KeyError, maf.maf_from_info, records[0])
+            self.assertRaises(KeyError, maf.maf_from_bcftools, records[0])
         # put this in a new test soon. unittests shouldn't have if statements
         if bcftools.HAVE_BCFTOOLS:
             # fill in the MAF tag with bcftools
-            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            with bcftools.VariantFileFilledInTags(fake.path, "r", ["MAF"]) as vcf:
                 records = list(vcf)
                 self.assertEqual(len(records), 1)
-                self.assertAlmostEqual(maf.maf_from_info(records[0]), 0.5)
+                self.assertAlmostEqual(maf.maf_from_bcftools(records[0]), 0.5)
 
 
 class TestMafFromFr(fake_vcf.TestWithTempDir):
@@ -116,11 +116,11 @@ class TestMafFromFr(fake_vcf.TestWithTempDir):
         self.assertTrue(fake.path.exists())
         # put this in a new test soon. unittests shouldn't have if statements
         if bcftools.HAVE_BCFTOOLS:
-            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            with bcftools.VariantFileFilledInTags(fake.path, "r", ["MAF"]) as vcf:
                 records = list(vcf)
                 self.assertEqual(len(records), 1)
                 self.assertAlmostEqual(
-                    maf.maf_from_fr(records[0]), maf.maf_from_info(records[0])
+                    maf.maf_from_fr(records[0]), maf.maf_from_bcftools(records[0])
                 )
 
     @unittest.skipUnless(bcftools.HAVE_BCFTOOLS, "bcftools not found")
@@ -143,12 +143,12 @@ class TestMafFromFr(fake_vcf.TestWithTempDir):
         )
         fake.write_vcf()
         self.assertTrue(fake.path.exists())
-        with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+        with bcftools.VariantFileFilledInTags(fake.path, "r", ["MAF"]) as vcf:
             records = list(vcf)
             self.assertEqual(len(records), 3)
             for record in records:
                 self.assertNotAlmostEqual(
-                    maf.maf_from_fr(record), maf.maf_from_info(record)
+                    maf.maf_from_fr(record), maf.maf_from_bcftools(record)
                 )
 
 
@@ -205,12 +205,12 @@ class TestMafFromSamples(fake_vcf.TestWithTempDir):
         # put this in a new test soon. unittests shouldn't have if statements
         if bcftools.HAVE_BCFTOOLS:
             # Check agreement with bcftools
-            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            with bcftools.VariantFileFilledInTags(fake.path, "r", ["MAF"]) as vcf:
                 records = list(vcf)
                 self.assertEqual(len(records), 1)
                 self.assertAlmostEqual(
                     maf.maf_from_samples(records[0]),
-                    maf.maf_from_info(records[0]),
+                    maf.maf_from_bcftools(records[0]),
                     places=5,
                 )
 
@@ -253,12 +253,12 @@ class TestMafFromSamples(fake_vcf.TestWithTempDir):
         # put this in a new test soon. unittests shouldn't have if statements
         if bcftools.HAVE_BCFTOOLS:
             # Check agreement with bcftools
-            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            with bcftools.VariantFileFilledInTags(fake.path, "r", ["MAF"]) as vcf:
                 records = list(vcf)
                 self.assertEqual(len(records), 1)
                 self.assertAlmostEqual(
                     maf.maf_from_samples(records[0]),
-                    maf.maf_from_info(records[0]),
+                    maf.maf_from_bcftools(records[0]),
                     places=5,
                 )
 
@@ -313,7 +313,7 @@ class TestMafFromSamples(fake_vcf.TestWithTempDir):
         if bcftools.HAVE_BCFTOOLS:
             # It'll then make a VCF with invalid MAF values, which isn't great.
             # Check agreement with bcftools
-            with bcftools.VariantFileFilledInTags(fake.path, ["MAF"]) as vcf:
+            with bcftools.VariantFileFilledInTags(fake.path, "r", ["MAF"]) as vcf:
                 records = list(vcf)
                 with self.assertRaisesRegex(KeyError, "Invalid INFO field: MAF"):
-                    maf.maf_from_info(records[0])
+                    maf.maf_from_bcftools(records[0])

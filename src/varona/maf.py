@@ -63,7 +63,7 @@ def maf_from_fr(variant: pysam.VariantRecord) -> float:
     return af_list[1]
 
 
-def maf_from_info(variant: pysam.VariantRecord) -> float:
+def maf_from_bcftools(variant: pysam.VariantRecord) -> float:
     """Extract the "MAF" value from the info section in a variant.
 
     This function assumes the presence of an "MAF" key in the info section.
@@ -103,7 +103,7 @@ def maf_from_samples(variant: pysam.VariantRecord) -> float:
 
 
 def maf_from_method(variant: pysam.VariantRecord, method: MafMethod) -> float:
-    """A dispatcher for :func:`maf_from_fr`, :func:`maf_from_info`, and :func:`maf_from_samples`.
+    """A dispatcher for :func:`maf_from_fr`, :func:`maf_from_bcftools`, and :func:`maf_from_samples`.
 
     :param variant: A :class:`pysam.VariantRecord` object.
     :param method: The MAF calculation method.
@@ -113,5 +113,5 @@ def maf_from_method(variant: pysam.VariantRecord, method: MafMethod) -> float:
     if method == MafMethod.FR:
         return maf_from_fr(variant)
     elif method == MafMethod.BCFTOOLS:
-        return maf_from_info(variant)
+        return maf_from_bcftools(variant)
     return maf_from_samples(variant)
