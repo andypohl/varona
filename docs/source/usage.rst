@@ -1,6 +1,8 @@
 Usage
 =====
 
+Below is the usage information for the varona command:
+
 .. code-block :: text
 
     usage: varona [-h] [--log-level {debug,info,warning,error}] 
@@ -21,3 +23,8 @@ Usage
                             genome assembly used in Ensembl VEP API (default: GRCh37)
       --maf {FR,BCFTOOLS,SAMPLES}
                             MAF calculation method (default: SAMPLES)
+
+The ``--maf`` option gives three options for calculating a minor allele
+frequency (MAF) value to include in the output CSV file.  The BCFTOOLS option
+is available if Varona can find an installation of `bcftools <https://samtools.github.io/bcftools/bcftools.html>`_
+on the system.

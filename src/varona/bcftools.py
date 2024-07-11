@@ -13,7 +13,12 @@ HAVE_BCFTOOLS = (
     shutil.which("bcftools") is not None
     and os.getenv("VARONA_DISABLE_BCFTOOLS", "0") != "1"
 )
-"""True if the bcftools command is available on the system."""
+"""True if the bcftools command is available on the system.
+
+Regardless of whether the bcftools command can be found, this
+variable will be set to False if the environment variable
+``VARONA_DISABLE_BCFTOOLS`` is set to "1".
+"""
 
 ALLOWED_TAGS = {"AN", "AC", "AF", "MAF"}
 """Set of allowed tags that can be added to the VCF file."""

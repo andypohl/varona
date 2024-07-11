@@ -15,6 +15,7 @@ import typing
 
 import httpx
 import pysam
+
 from varona import enum
 
 logger = logging.getLogger("varona.ensembl")
@@ -50,7 +51,11 @@ Ensembl API.
 """
 
 API_LONG_RETRY = 60
-"""Delay retrying an API call after a 429 response without Retry-After header."""
+"""Delay retrying an API call after a 429 response without Retry-After header.
+
+Currently this is the only place in the code where such a delay is defined. In
+the future, more settings for the httpx client may be desirable.
+"""
 
 
 @contextlib.contextmanager

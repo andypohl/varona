@@ -103,7 +103,7 @@ def maf_from_samples(variant: pysam.VariantRecord) -> float:
 
 
 def maf_from_method(variant: pysam.VariantRecord, method: MafMethod) -> float:
-    """Compute the MAF using the specified method.
+    """A dispatcher for :func:`maf_from_fr`, :func:`maf_from_info`, and :func:`maf_from_samples`.
 
     :param variant: A :class:`pysam.VariantRecord` object.
     :param method: The MAF calculation method.
