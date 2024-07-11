@@ -31,6 +31,6 @@ jobs:
             pip-${{ runner.os }}-${{ matrix.python-version }}-
       - name: Run tests
         run: |
-          python${{ matrix.python-version }} -m pip -U pip
+          python${{ matrix.python-version }} -m pip install -U pip
           python${{ matrix.python-version }} -m pip install -r .github/ci-requirements.txt
           python${{ matrix.python-version }} -m unittest discover -s src -p "*_test.py"
