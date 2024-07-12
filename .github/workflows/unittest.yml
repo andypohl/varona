@@ -9,6 +9,8 @@ on:
       - "setup.py"
       - "setup.cfg"
       - "pyproject.toml"
+      - ".github/ci-requirements.txt"
+      - ".github/workflows/unittest.yml"
   pull_request:
     branches:
       - "main"
@@ -17,6 +19,8 @@ on:
       - "setup.py"
       - "setup.cfg"
       - "pyproject.toml"
+      - ".github/ci-requirements.txt"
+      - ".github/workflows/unittest.yml"
 
 jobs:
   build:
