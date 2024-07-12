@@ -45,6 +45,11 @@ intersphinx_mapping = {
     "pysam": ("https://pysam.readthedocs.io/en/latest/", None),
 }
 
+# Add custom CSS files
+html_css_files = [
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css",
+]
+
 
 def setup(app: Sphinx):
     def autodoc_skip_member(app, what, name, obj, skip, options):
