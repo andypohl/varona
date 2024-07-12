@@ -1,0 +1,45 @@
+name: deploy-pages
+on:
+  push:
+    paths:
+      - "src/**/*.py"
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+      - ".github/ci-requirements.txt"
+
+jobs:
+  sphinx-build:
+    name: Build Sphinx Pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: get pip cache dir
+        id: pip-cache
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: restore pip cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: pip-Linux-3.11-${{ hashFiles('.github/ci-requirements.txt') }}
+          restore-keys: |
+            pip-Linux-3.11-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Build Sphinx Pages
+        run: |
+          python -m pip install -U pip
+          python -m pip install -r .github/ci-requirements.txt
+          cd docs/
+          make html
+      - name: Publish to Cloudflare Pages
+        id: deployment
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: varona
+          directory: build/html
+          workingDirectory: docs
+          wranglerVersion: "3"
