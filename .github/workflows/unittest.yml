@@ -2,7 +2,16 @@ name: Python Test
 
 on:
   push:
+    branches-ignore:
+      - "main"
+    paths:
+      - "src/**/*.py"
+      - "setup.py"
+      - "setup.cfg"
+      - "pyproject.toml"
   pull_request:
+    branches:
+      - "main"
     paths:
       - "src/**/*.py"
       - "setup.py"
