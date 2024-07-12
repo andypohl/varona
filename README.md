@@ -1,7 +1,11 @@
+![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fandypohl%2Fvarona%2Fmain%2Fpyproject.toml&logo=python)
 ![main branch unittests](https://github.com/andypohl/varona/actions/workflows/unittest.yml/badge.svg)
 
 # varona
-Variant Annotator.
+Variant Annotation library and command line tool to read and annotate VCF
+file records, supplementing the information with data from the Ensembl VEP
+API.  More information about the Varona is available in at the
+[documentation site](https://varona.pages.dev/).
 
 ## Installation
 
