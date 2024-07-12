@@ -1,3 +1,5 @@
+![main branch unittests](https://github.com/andypohl/varona/actions/workflows/unittest.yml/badge.svg?branch=main)
+
 # varona
 Variant Annotator.
 
