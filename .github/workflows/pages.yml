@@ -29,6 +29,8 @@ jobs:
           python-version: 3.11
       - name: Build Sphinx Pages
         run: |
+          python -m pip install -U pip
+          python -m pip install -r .github/ci-requirements.txt
           cd docs/
           make html
       - name: Publish to Cloudflare Pages
