@@ -54,3 +54,5 @@ def setup(app: Sphinx):
         return skip  # Otherwise, keep the original decision
 
     app.connect("autodoc-skip-member", autodoc_skip_member)
+    # Add custom JavaScript file
+    app.add_js_file("custom.js")
