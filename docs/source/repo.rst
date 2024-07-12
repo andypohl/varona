@@ -1,5 +1,5 @@
-Repository Page
-===============
+GitHub
+======
 
 .. raw:: html
 

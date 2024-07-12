@@ -26,6 +26,6 @@ that a `Verona PyPi library already exists <https://pypi.org/project/verona/>`_,
 
 .. toctree::
    :maxdepth: 1
-   :caption: GitHub
+   :hidden:
 
    repo
