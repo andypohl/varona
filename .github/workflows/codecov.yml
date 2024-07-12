@@ -2,17 +2,6 @@ name: codecov
 
 on:
   push:
-    branches-ignore:
-      - "main"
-    paths:
-      - "src/**/*.py"
-      - "setup.py"
-      - "setup.cfg"
-      - "pyproject.toml"
-      - ".github/ci-requirements.txt"
-      - ".github/workflows/codecov.yml"
-      - ".github/workflows/unittest.yml"
-  pull_request:
     branches:
       - "main"
     paths:
