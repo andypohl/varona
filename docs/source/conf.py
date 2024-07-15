@@ -31,6 +31,7 @@ extensions = [
     "sphinx_rtd_theme",
 ]
 exclude_patterns = []
+add_module_names = False
 html_theme = "sphinx_rtd_theme"
 # html_logo = "_static/logo.svg"
 html_theme_options = {
