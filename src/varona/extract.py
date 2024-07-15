@@ -18,11 +18,31 @@ logger = logging.getLogger("varona.extract")
 def default_vep_response_extractor(response_item: dict) -> dict:
     """An example function to extract VEP data from the response.
 
-    Care should be taken to handle the data in the response with correct
-    spelling of keys, indexing, etc. :class:`KeyError` and :class:`IndexError`
-    exceptions can either be handled by this function or by the caller to
-    :func:`varona.ensemble.query_vep_api`.  For this specific example, no
-    exceptions are caught and so will cause the query to fail.
+    The response item from the API is a dictionary (not a flat one),
+    and this function extracts the data we're interested in
+    into a flat dictionary.
+
+    +-------------------+--------------------------------------------+
+    | extracted key     | original response_item key                 |
+    +===================+============================================+
+    | contig            | seq_region_name                            |
+    +-------------------+--------------------------------------------+
+    | pos               | start                                      |
+    +-------------------+--------------------------------------------+
+    | ref               | allele_string (first allele, '/' sep)      |
+    +-------------------+--------------------------------------------+
+    | alt (comma-sep)   | allele_string (all other alleles, '/' sep) |
+    +-------------------+--------------------------------------------+
+    | type              | variant_class                              |
+    +-------------------+--------------------------------------------+
+    | effect            | most_severe_consequence                    |
+    +-------------------+--------------------------------------------+
+    | gene_name         | transcript_consequences[0].gene_symbol     |
+    +-------------------+--------------------------------------------+
+    | gene_id           | transcript_consequences[0].gene_id         |
+    +-------------------+--------------------------------------------+
+    | transcript_id     | transcript_consequences[0].transcript_id   |
+    +-------------------+--------------------------------------------+
 
     :param response_item: The VEP API response is a list of dictionaries,
         and this is one of the items in the list.
@@ -53,9 +73,73 @@ def default_vep_response_extractor(response_item: dict) -> dict:
 
 def platypus_vcf_record_extractor(
     record: pysam.VariantRecord,
-    **addl_cols: typing.Callable[[pysam.VariantRecord], typing.Union[int, float, str]]
+    **addl_cols: typing.Callable[[pysam.VariantRecord], typing.Union[int, float, str]],
 ) -> dict:
-    """Example function to extract data from a VCF record."""
+    """Example function to extract data from a VCF record.
+
+    Currently there actually isn't a higher-level function to call this in an
+    analogous way to the VEP API response extractor, but below is the general
+    pattern:
+
+    .. code-block:: python
+
+        import pysam
+        import pathlib
+        import polars as pl
+
+        from varona import extract
+
+        vcf_path = pathlib.Path("/path/to/file.vcf")
+        data = []
+        with pysam.VariantFile(vcf_path) as vcf:
+            for record in vcf:
+                extracted_data = extract.platypus_vcf_record_extractor(record)
+                data.append(extracted_data)
+        df = pl.DataFrame(data)
+
+    The idea is that the "extractor" will transform the VCF record into a
+    dictionary that will in turn be used as a row in a DataFrame.  This function
+    is therefore just and example extractor, and the one that the Varona
+    command-line tool uses.  If alternative fields from the VCF record are
+    needed, the goal is to make substituting this extractor with a different
+    one as easy as possible.
+
+    Below are the members of the VCF record object that are extracted by this
+    function, along with the key names they are assigned to in the returned
+    dictionary.
+
+    +-------------------+--------------------------------------------+
+    | extracted key     | VCF record member                          |
+    +===================+============================================+
+    | contig            | contig                                     |
+    +-------------------+--------------------------------------------+
+    | pos               | pos                                        |
+    +-------------------+--------------------------------------------+
+    | ref               | ref                                        |
+    +-------------------+--------------------------------------------+
+    | alt (comma-sep)   | alts (list)                                |
+    +-------------------+--------------------------------------------+
+    | sequence_depth    | info["TC"]                                 |
+    +-------------------+--------------------------------------------+
+    | max_variant_reads | max(info["TR"])                            |
+    +-------------------+--------------------------------------------+
+    | variant_read_pct  | max_variant_reads / sequence_depth * 100   |
+    +-------------------+--------------------------------------------+
+
+    :param record: A :class:`pysam.VariantRecord` object.
+    :param addl_cols: Additional columns to extract from the record.
+        The keys are the column names and the values are functions that
+        take the record and return the value for that column.  The reason
+        for having this additional layer of callback is to accommodate
+        three competing MAF calculations in a single function.  See
+        the :mod:`varona.maf` module for more information on those
+        functions, but these are a variable number of keyword arguments,
+        where the argument name will become a key in the returned
+        dictionary, and the argument value is a function also taking
+        a :class:`pysam.VariantRecord` object, but rather than returning
+        a dictionary, returning a scalar such as in :func:`varona.maf.maf_from_fr`.
+
+    """
     new_item = {}
     new_item["contig"] = record.contig
     new_item["pos"] = record.pos

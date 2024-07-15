@@ -40,6 +40,13 @@ version, the callbacks should provide a fair amount of flexibility.
 
    <br>
 
+"Bring your own extractor"
+--------------------------
+The two functions in :doc:`varona.extract` are the **extractors** used by the
+main function in :doc:`varona.varona`, and the command-line application, but
+are meant to be replaced by an analyst with functions to suit their needs. 
+
+
 ===========
 Ensembl API
 ===========
