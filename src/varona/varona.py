@@ -7,6 +7,7 @@ top-level library namespace.
 import functools
 import logging
 import pathlib
+import typing
 
 import httpx
 import polars as pl
@@ -42,6 +43,21 @@ VCF_DF_SCHEMA = {
 """Polars schema for the VCF DataFrame."""
 
 
+def vcf_rows(
+    vcf_path: pathlib.Path, vcf_extractor: typing.Callable[[pysam.VariantRecord], dict]
+) -> typing.Iterator[dict]:
+    """Extract rows from a VCF file.
+
+    :param vcf_path: The path to the VCF file.
+    :param vcf_extractor: The function to extract data from the VCF.
+    :yields: Row-dictionaries with the extracted data.
+    """
+    with pysam.VariantFile(vcf_path, "r") as vf:
+        for record in vf:
+            new_item = vcf_extractor(record)
+            yield new_item
+
+
 def varona_dataframe(
     vcf_path: pathlib.Path,
     maf_method: maf.MafMethod = maf.MafMethod.SAMPLES,
@@ -61,17 +77,14 @@ def varona_dataframe(
     :return: A DataFrame with the VCF data.
     """
     lst = []
-
-    VarFile = (
-        pysam.VariantFile
-        if maf_method != maf.MafMethod.BCFTOOLS
-        else functools.partial(bcftools.VariantFileFilledInTags, fillin_tags=["MAF"])
-    )
     maf_func = functools.partial(maf.maf_from_method, method=maf_method)
-    with VarFile(vcf_path, "r") as vf:
-        for record in vf:
-            new_item = vcf_extractor(record, maf=maf_func)
-            lst.append(new_item)
+    if maf_method == maf.MafMethod.BCFTOOLS:
+        with bcftools.VariantFileFilledInTags(vcf_path, fillin_tags=["MAF"]) as vf:
+            for record in vf:
+                new_item = vcf_extractor(record, maf=maf_func)
+                lst.append(new_item)
+    else:
+        lst = list(vcf_rows(vcf_path, vcf_extractor))
     vcf_df = pl.DataFrame(lst, schema=VCF_DF_SCHEMA)
     api_df = pl.DataFrame(schema=API_DF_SCHEMA)
     chunks = list(ensembl.vcf_to_vep_query_data(vcf_path))
