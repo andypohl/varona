@@ -52,7 +52,8 @@ html_css_files = [
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css",
 ]
 smv_tag_whitelist = r"^v\d+\.\d+\.\d+.*$"
-smv_branch_whitelist = r"^main$"
+smv_branch_whitelist = r"^((sphinx|docs).*|main)$"
+smv_released_pattern = r"^tags/v.*$"
 
 
 def setup(app: Sphinx):

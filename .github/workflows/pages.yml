@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - name: fetch main branch
-        run: git fetch origin main
+        run: git --verbose fetch origin main
       - name: get pip cache dir
         id: pip-cache
         run: |
