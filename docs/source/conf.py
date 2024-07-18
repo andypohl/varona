@@ -29,6 +29,7 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.viewcode",
     "sphinx_rtd_theme",
+    "sphinx_multiversion",
 ]
 exclude_patterns = []
 add_module_names = False
@@ -50,6 +51,8 @@ intersphinx_mapping = {
 html_css_files = [
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css",
 ]
+smv_tag_whitelist = r"^v\d+\.\d+\.\d+.*$"
+smv_branch_whitelist = r"^main$"
 
 
 def setup(app: Sphinx):
@@ -62,3 +65,4 @@ def setup(app: Sphinx):
     app.connect("autodoc-skip-member", autodoc_skip_member)
     # Add custom JavaScript file
     app.add_js_file("custom.js")
+    app.add_css_file("fa.css")
