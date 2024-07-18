@@ -17,7 +17,11 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
       - name: fetch main branch
-        run: git --verbose fetch origin main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          git fetch --all
+          git fetch origin main
+          git branch -f main remotes/origin/main
       - name: get pip cache dir
         id: pip-cache
         run: |
