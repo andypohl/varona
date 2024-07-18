@@ -13,6 +13,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: fetch main branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          git fetch --all
+          git fetch origin main
+          git branch -f main remotes/origin/main
       - name: get pip cache dir
         id: pip-cache
         run: |
