@@ -77,7 +77,8 @@ def vcf_dataframe(
                 "contig": record.contig,
                 "pos": record.pos,
                 "ref": record.ref,
-                "alt": record.alts[0],
+                "alt": record.alts[0]
+            }
 
         # Make a DataFrame from the VCF file.  The columns laid out by
         # the extractor function.
@@ -125,7 +126,12 @@ def vep_api_dataframe(
 
             loci_list = ["1:1000:A:T", "2:2000:C:G"]
             with httpx.Client() as client:
-                api_df = vep_api_dataframe(client, loci_list, ensembl.Assembly.GRCh37, example_extractor)
+                api_df = vep_api_dataframe(
+                    client,
+                    loci_list,
+                    ensembl.Assembly.GRCh37,
+                    example_extractor
+                )
                 print(api_df)
 
     :param client: The HTTPX client to use for the API query.
