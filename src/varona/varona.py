@@ -43,19 +43,102 @@ VCF_DF_SCHEMA = {
 """Polars schema for the VCF DataFrame."""
 
 
-def vcf_rows(
+def _vcf_rows(
     vcf_path: pathlib.Path, vcf_extractor: typing.Callable[[pysam.VariantRecord], dict]
-) -> typing.Iterator[dict]:
-    """Extract rows from a VCF file.
+):
+    """Helper function to extract rows from a VCF file.
 
     :param vcf_path: The path to the VCF file.
     :param vcf_extractor: The function to extract data from the VCF.
-    :yields: Row-dictionaries with the extracted data.
+    :yields: A dictionary of extracted data from the VCF.
     """
     with pysam.VariantFile(vcf_path, "r") as vf:
         for record in vf:
             new_item = vcf_extractor(record)
             yield new_item
+
+
+def vcf_dataframe(
+    vcf_path: pathlib.Path,
+    vcf_extractor: typing.Callable[[pysam.VariantRecord], dict],
+    schema: dict[str, typing.Any] | None = None,
+) -> pl.DataFrame:
+    """From the records in a VCF file, make a dataframe given an extractor.
+
+    .. code-block:: python
+
+        import pathlib
+        import polars as pl
+        import pysam
+        from varona import vcf_dataframe
+
+        def example_extractor(record: pysam.VariantRecord) -> dict:
+            return {
+                "contig": record.contig,
+                "pos": record.pos,
+                "ref": record.ref,
+                "alt": record.alts[0],
+
+        # Make a DataFrame from the VCF file.  The columns laid out by
+        # the extractor function.
+
+        vcf_path = pathlib.Path("/path/to/file.vcf")
+        df = vcf_dataframe(vcf_path, example_extractor)
+        print(df)
+
+
+    :param vcf_path: The path to the VCF file.
+    :param vcf_extractor: The function to extract data from the VCF.
+    :param schema: Optional schema for the DataFrame to help enforce column types.
+    :return: DataFrame with the extracted data.
+    """
+    return pl.LazyFrame(_vcf_rows(vcf_path, vcf_extractor), schema=schema).collect()
+
+
+def vep_api_dataframe(
+    client: httpx.Client,
+    loci_list: list[str],
+    genome_assembly: ensembl.Assembly,
+    api_extractor: typing.Callable[[dict], dict],
+    schema: dict[str, typing.Any] | None = None,
+) -> pl.DataFrame:
+    """Query the Ensembl VEP API and make a DataFrame using a provided extractor.
+
+    Like :func:`vcf_dataframe`, this is a vehicle for a custom extractor function
+    to be used on the response dictionaries from the Ensembl VEP API.  Below is an
+    example of how to use this function.  A :class:`httpx.Client` still needs to
+    be supplied.
+
+    .. code-block:: python
+
+            import pathlib
+            import polars as pl
+            import httpx
+            from varona import vep_api_dataframe, ensembl
+
+            def example_extractor(response: dict) -> dict:
+                return {
+                    "contig": response["seq_region_name"],
+                    "pos": response["start"],
+                    "type": response["variant_class"]
+                }
+
+            loci_list = ["1:1000:A:T", "2:2000:C:G"]
+            with httpx.Client() as client:
+                api_df = vep_api_dataframe(client, loci_list, ensembl.Assembly.GRCh37, example_extractor)
+                print(api_df)
+
+    :param client: The HTTPX client to use for the API query.
+    :param loci_list: The list of loci to query the API.
+    :param genome_assembly: The genome assembly used in the Ensembl VEP API.
+    :param api_extractor: The function to extract data from the VEP API response.
+    :param schema: Optional schema for the DataFrame to help enforce column types.
+    :return: A DataFrame with the data from the VEP API.
+    """
+    data = ensembl.query_vep_api(
+        client, loci_list, genome_assembly, response_extractor=api_extractor
+    )
+    return pl.DataFrame(data, schema=schema)
 
 
 def varona_dataframe(
@@ -76,6 +159,7 @@ def varona_dataframe(
     :param api_extractor: The function to extract data from the VEP API response.
     :return: A DataFrame with the VCF data.
     """
+    # VCF part
     lst = []
     maf_func = functools.partial(maf.maf_from_method, method=maf_method)
     if maf_method == maf.MafMethod.BCFTOOLS:
@@ -84,9 +168,9 @@ def varona_dataframe(
                 new_item = vcf_extractor(record, maf=maf_func)
                 lst.append(new_item)
     else:
-        lst = list(vcf_rows(vcf_path, vcf_extractor))
+        lst = list(_vcf_rows(vcf_path, vcf_extractor))
     vcf_df = pl.DataFrame(lst, schema=VCF_DF_SCHEMA)
-    api_df = pl.DataFrame(schema=API_DF_SCHEMA)
+    # API part
     chunks = list(ensembl.vcf_to_vep_query_data(vcf_path))
     n_chunks = len(chunks)
     with httpx.Client(
@@ -94,10 +178,10 @@ def varona_dataframe(
         timeout=httpx.Timeout(float(timeout)),
     ) as client:
         for ix, chunk in enumerate(chunks, start=1):
-            data = ensembl.query_vep_api(
-                client, chunk, genome_assembly, response_extractor=api_extractor
+            chunk_df = vep_api_dataframe(
+                client, chunk, genome_assembly, api_extractor, schema=API_DF_SCHEMA
             )
-            api_df = api_df.vstack(pl.DataFrame(data, schema=API_DF_SCHEMA))
+            api_df = api_df.vstack(chunk_df)
             logger.info(f"processed {ix}/{n_chunks} chunks from VEP API")
     api_df.rechunk()
     combined_df = vcf_df.join(api_df, on=["contig", "pos", "ref", "alt"], how="left")
