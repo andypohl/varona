@@ -153,15 +153,15 @@ def vep_api_dataframe(
                     example_extractor
                 )
                 print(api_df)
-            ##shape: (2, 3)
-            ##┌────────┬──────────┬──────────────┐
-            ##│ contig   ┆ pos        ┆ type            │
-            ##│ ---      ┆ ---        ┆ ---             │
-            ##│ str      ┆ i64        ┆ str             │
-            ##╞════════╪══════════╪══════════════╡
-            ##│ 1        ┆ 1158631    ┆ SNV             │
-            ##│ 1        ┆ 91859795   ┆ substitution    │
-            ##└────────┴──────────┴──────────────┘
+                ##shape: (2, 3)
+                ##┌────────┬──────────┬──────────────┐
+                ##│ contig ┆ pos      ┆ type         │
+                ##│ ---    ┆ ---      ┆ ---          │
+                ##│ str    ┆ i64      ┆ str          │
+                ##╞════════╪══════════╪══════════════╡
+                ##│ 1      ┆ 1158631  ┆ SNV          │
+                ##│ 1      ┆ 91859795 ┆ substitution │
+                ##└────────┴──────────┴──────────────┘
 
     :param client: The HTTPX client to use for the API query.
     :param loci_list: The list of loci to query the API.
