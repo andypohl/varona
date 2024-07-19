@@ -86,7 +86,18 @@ def vcf_dataframe(
         vcf_path = pathlib.Path("/path/to/file.vcf")
         df = vcf_dataframe(vcf_path, example_extractor)
         print(df)
-
+        ##shape: (5, 4)
+        ##┌────────┬─────────┬─────┬─────┐
+        ##│ contig ┆ pos     ┆ ref ┆ alt │
+        ##│ ---    ┆ ---     ┆ --- ┆ --- │
+        ##│ str    ┆ i64     ┆ str ┆ str │
+        ##╞════════╪═════════╪═════╪═════╡
+        ##│ 1      ┆ 1158631 ┆ A   ┆ G   │
+        ##│ 1      ┆ 1246004 ┆ A   ┆ G   │
+        ##│ 1      ┆ 1249187 ┆ G   ┆ A   │
+        ##│ 1      ┆ 1261824 ┆ G   ┆ C   │
+        ##│ 1      ┆ 1387667 ┆ C   ┆ G   │
+        ##└────────┴─────────┴─────┴─────┘
 
     :param vcf_path: The path to the VCF file.
     :param vcf_extractor: The function to extract data from the VCF.
@@ -124,8 +135,17 @@ def vep_api_dataframe(
                     "type": response["variant_class"]
                 }
 
-            loci_list = ["1:1000:A:T", "2:2000:C:G"]
-            with httpx.Client() as client:
+            loci_list = [
+                "1 1158631 . A G . . .",
+                "1 91859795 . TATGTGA CATGTGA,CATGTGG . . .",
+            ]
+            with httpx.Client(
+                limits=httpx.Limits(
+                    max_connections=5,
+                    max_keepalive_connections=5
+                ),
+                timeout=httpx.Timeout(float(300)),
+            ) as client:
                 api_df = vep_api_dataframe(
                     client,
                     loci_list,
@@ -133,6 +153,15 @@ def vep_api_dataframe(
                     example_extractor
                 )
                 print(api_df)
+            ##shape: (2, 3)
+            ##┌────────┬──────────┬──────────────┐
+            ##│ contig   ┆ pos        ┆ type            │
+            ##│ ---      ┆ ---        ┆ ---             │
+            ##│ str      ┆ i64        ┆ str             │
+            ##╞════════╪══════════╪══════════════╡
+            ##│ 1        ┆ 1158631    ┆ SNV             │
+            ##│ 1        ┆ 91859795   ┆ substitution    │
+            ##└────────┴──────────┴──────────────┘
 
     :param client: The HTTPX client to use for the API query.
     :param loci_list: The list of loci to query the API.
