@@ -34,7 +34,13 @@ varona = "varona.cli:main"
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx-rtd-theme", "sphinx-multiversion"]
 test = ["coverage"]
-building = ["wheel", "twine", "setuptools", "build"]
+building = [
+    "wheel",
+    "twine",
+    "setuptools",
+    "build",
+    "keyrings.google-artifactregistry-auth",
+]
 dev = ["varona[docs]", "varona[test]", "varona[building]", "black"]
 
 [tool.setuptools.dynamic]
