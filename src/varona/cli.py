@@ -11,10 +11,30 @@ from varona import ensembl, maf
 logger = logging.getLogger("varona.cli")
 
 
-def main():
-    # Create the argument parser
-    parser = argparse.ArgumentParser(description="Annotate a VCF file.", prog="varona")
+def varona_args_parser() -> argparse.ArgumentParser:
+    """:class:`argparse.ArgumentParser` setup for the varona CLI.
 
+    .. code-block:: text
+        usage: varona [-h] [--log-level {debug,info,warning,error}] [--assembly {GRCh37,GRCh38}] [--maf {FR,SAMPLES,BCFTOOLS}] input_vcf output_csv
+
+        Annotate a VCF file.
+
+        positional arguments:
+          input_vcf             Path to the input VCF file
+          output_csv            Path to the output CSV file
+
+        options:
+          -h, --help            show this help message and exit
+          --log-level {debug,info,warning,error}
+                                Set the logging level (default: WARNING)
+          --assembly {GRCh37,GRCh38}
+                                genome assembly used in Ensembl VEP API (default: GRCh37)
+          --maf {FR,SAMPLES,BCFTOOLS}
+                                MAF calculation method (default: SAMPLES)
+
+    :return: the configured argument parser.
+    """
+    parser = argparse.ArgumentParser(description="Annotate a VCF file.", prog="varona")
     # Positional arguments
     parser.add_argument(
         "input_vcf", type=pathlib.Path, help="Path to the input VCF file"
@@ -44,7 +64,11 @@ def main():
         default=maf.MafMethod.SAMPLES,
         help="MAF calculation method (default: SAMPLES)",
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main():
+    args = varona_args_parser().parse_args()
     # Set the logging level
     logging.basicConfig(level=args.log_level.upper())
     logger.info("varona version: %s", varona.__version__)
