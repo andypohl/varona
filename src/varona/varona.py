@@ -149,7 +149,7 @@ def vep_api_dataframe(
                 api_df = vep_api_dataframe(
                     client,
                     loci_list,
-                    ensembl.Assembly.GRCh37,
+                    ensembl.Assembly.GRCH37,
                     example_extractor
                 )
                 print(api_df)
@@ -180,7 +180,7 @@ def varona_dataframe(
     vcf_path: pathlib.Path,
     maf_method: maf.MafMethod = maf.MafMethod.SAMPLES,
     timeout: int = 300,
-    genome_assembly: ensembl.Assembly = ensembl.Assembly.GRCh37,
+    genome_assembly: ensembl.Assembly = ensembl.Assembly.GRCH37,
     vcf_extractor=extract.platypus_vcf_record_extractor,
     api_extractor=extract.default_vep_response_extractor,
 ) -> pl.DataFrame:

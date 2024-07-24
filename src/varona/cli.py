@@ -12,7 +12,9 @@ logger = logging.getLogger("varona.cli")
 
 
 def varona_args_parser() -> argparse.ArgumentParser:
-    """:class:`argparse.ArgumentParser` setup for the varona CLI.
+    """Setup for the varona CLI.
+
+    The CLI ``--help`` message is shown below:
 
     .. code-block:: text
 
@@ -60,7 +62,7 @@ def varona_args_parser() -> argparse.ArgumentParser:
         "--assembly",
         type=ensembl.Assembly,
         choices=list(ensembl.Assembly),
-        default=ensembl.Assembly.GRCh37,
+        default=ensembl.Assembly.GRCH37,
         help="genome assembly used in Ensembl VEP API (default: GRCh37)",
     )
     parser.add_argument(

@@ -38,12 +38,12 @@ class MafMethod(enum.CiStrEnum):
     presence of non-pysam bcftools.
     """
 
-    FR = enum.auto()
-    SAMPLES = enum.auto()
+    FR = "FR"
+    SAMPLES = "SAMPLES"
     # Conditionally add the INFO method if non-pysam bcftools
     # is available.
     if bcftools.HAVE_BCFTOOLS:
-        BCFTOOLS = enum.auto()
+        BCFTOOLS = "BCFTOOLS"
 
 
 def maf_from_fr(variant: pysam.VariantRecord) -> float:
