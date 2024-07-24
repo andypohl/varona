@@ -15,6 +15,7 @@ def varona_args_parser() -> argparse.ArgumentParser:
     """:class:`argparse.ArgumentParser` setup for the varona CLI.
 
     .. code-block:: text
+
         usage: varona [-h] [--log-level {debug,info,warning,error}] [--assembly {GRCh37,GRCh38}] [--maf {FR,SAMPLES,BCFTOOLS}] input_vcf output_csv
 
         Annotate a VCF file.
