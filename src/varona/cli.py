@@ -16,7 +16,12 @@ def varona_args_parser() -> argparse.ArgumentParser:
 
     .. code-block:: text
 
-        usage: varona [-h] [--log-level {debug,info,warning,error}] [--assembly {GRCh37,GRCh38}] [--maf {FR,SAMPLES,BCFTOOLS}] input_vcf output_csv
+        usage: varona
+            [-h]
+            [--log-level {debug,info,warning,error}]
+            [--assembly {GRCh37,GRCh38}]
+            [--maf {FR,SAMPLES,BCFTOOLS}]
+            input_vcf output_csv
 
         Annotate a VCF file.
 
