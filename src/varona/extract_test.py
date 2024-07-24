@@ -1,6 +1,7 @@
 import unittest
 
 import pysam
+
 from varona import extract, fake_vcf, maf
 
 
@@ -101,6 +102,13 @@ class TestExtractApi(unittest.TestCase):
             "gene_id": "ENSG00000078808",
             "transcript_id": "ENST00000360001",
         }
+        self.assertDictEqual(extracted, expected)
+        # delete "transcript_consequences" key
+        del item["transcript_consequences"]
+        expected["gene_id"] = None
+        expected["gene_name"] = None
+        expected["transcript_id"] = None
+        extracted = extract.default_vep_response_extractor(item)
         self.assertDictEqual(extracted, expected)
 
 
