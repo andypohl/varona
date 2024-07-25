@@ -25,9 +25,9 @@ class BackportStrEnum(str, enum.Enum):
         return obj
 
 
-try:
+if sys.version_info >= (3, 11):
     StrEnum = enum.StrEnum
-except AttributeError:
+else:
     StrEnum = BackportStrEnum
 
 
