@@ -9,5 +9,3 @@ varona.varona
 .. autofunction:: varona.varona.vcf_dataframe
 
 .. autofunction:: varona.varona.vep_api_dataframe
-
-.. autofunction:: varona.varona.varona_dataframe
