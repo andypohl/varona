@@ -1,4 +1,9 @@
-import argparse
+"""High-level module for building a DataFrame from Platypus-style VCF.
+
+This module calls functions from the :mod:`varona.dataframe` module to build
+a DataFrame from a Platypus-style VCF file.
+"""
+
 import functools
 import logging
 import pathlib
@@ -6,7 +11,6 @@ import pathlib
 import httpx
 import polars as pl
 
-import varona
 from varona import bcftools, dataframe, ensembl, extract, maf
 
 logger = logging.getLogger("varona.platypus")
