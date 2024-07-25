@@ -2,4 +2,4 @@
 """
 
 from varona.__version__ import __version__
-from varona.varona import *
+from varona.dataframe import *

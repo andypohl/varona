@@ -13,6 +13,7 @@ varona
    varona.extract
    varona.fake_vcf
    varona.maf
+   varona.platypus
    varona.varona
 
 .. automodule:: varona

@@ -9,7 +9,7 @@ import polars as pl
 import polars.testing as plt
 import pysam
 
-from varona import ensembl, fake_vcf, varona
+from varona import dataframe, ensembl, fake_vcf
 
 
 class TestVcfDataFrame(fake_vcf.TestWithTempDir):
@@ -67,7 +67,9 @@ class TestVcfDataFrame(fake_vcf.TestWithTempDir):
 
         # two different extractors makes two different dataframes
 
-        df = varona.vcf_dataframe(fake.path, self.vcf_extractor_a, schema=self.schema_a)
+        df = dataframe.vcf_dataframe(
+            fake.path, self.vcf_extractor_a, schema=self.schema_a
+        )
         expected_df = pl.DataFrame(
             {
                 "pos": [100, 150],
@@ -76,7 +78,9 @@ class TestVcfDataFrame(fake_vcf.TestWithTempDir):
             schema=self.schema_a,
         )
         plt.assert_frame_equal(df, expected_df)
-        df = varona.vcf_dataframe(fake.path, self.vcf_extractor_b, schema=self.schema_b)
+        df = dataframe.vcf_dataframe(
+            fake.path, self.vcf_extractor_b, schema=self.schema_b
+        )
         expected_df = pl.DataFrame(
             {
                 "pos": [100, 150],
@@ -104,7 +108,7 @@ class TestVcfDataFrame(fake_vcf.TestWithTempDir):
                 "qual": pl.Float32,
             }
         )
-        df = varona.vcf_dataframe(fake.path, test_extractor_a, schema=schema_a)
+        df = dataframe.vcf_dataframe(fake.path, test_extractor_a, schema=schema_a)
         expected_df = pl.DataFrame(
             {},
             schema=schema_a,
@@ -173,7 +177,7 @@ class TestVepApiDataFrame(unittest.TestCase):
             "1 150 . G C . . .",
         ]
         mock_post.return_value = mock_200
-        df = varona.vep_api_dataframe(
+        df = dataframe.vep_api_dataframe(
             self.client,
             loci_list,
             ensembl.Assembly.GRCH37,
