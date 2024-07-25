@@ -168,14 +168,16 @@ def query_vep_api(
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     data = json.dumps({"variants": chunk})
     retried = 0
-    while retried <= retries:
+    done = False
+    while not done and retried <= retries:
         response = client.post(url, headers=headers, data=data, params=params)
         if response.status_code == 200:
             items = response.json()
-            if response_extractor:
-                # optionally transform data
-                items = list(map(response_extractor, items))
-            return items
+            done = True
+            # optionally transform data
+            if not response_extractor:
+                response_extractor = lambda x: x  # null operation
+            yield from map(response_extractor, items)
         elif response.status_code == 429:
             retried += 1
             retry_after = response.headers.get("Retry-After")
@@ -192,4 +194,5 @@ def query_vep_api(
                 time.sleep(sleep_time)
         else:
             response.raise_for_status()
-    raise TimeoutError("too many retries")
+    if not done:
+        raise TimeoutError("too many retries")

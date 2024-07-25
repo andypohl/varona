@@ -61,7 +61,7 @@ def _vcf_rows(
 def vcf_dataframe(
     vcf_path: pathlib.Path,
     vcf_extractor: typing.Callable[[pysam.VariantRecord], dict],
-    schema: dict[str, typing.Any] | None = None,
+    schema: dict[str, typing.Any] | pl.Schema | None = None,
 ) -> pl.DataFrame:
     """From the records in a VCF file, make a dataframe given an extractor.
 
@@ -173,7 +173,10 @@ def vep_api_dataframe(
     data = ensembl.query_vep_api(
         client, loci_list, genome_assembly, response_extractor=api_extractor
     )
-    return pl.DataFrame(data, schema=schema)
+    try:
+        return pl.LazyFrame(data, schema=schema).collect()
+    except pl.exceptions.ShapeError:
+        return pl.DataFrame({key: [] for key in schema.keys()}, schema=schema)
 
 
 def varona_dataframe(
