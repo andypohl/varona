@@ -34,6 +34,7 @@ class TestBackportStrEnum(unittest.TestCase):
         self.assertRaises(ValueError, lambda: TestEnumA("a"))
         self.assertRaises(ValueError, lambda: TestEnumB("a"))
 
+    @unittest.skipIf(sys.version_info < (3, 11), "requires Python 3.11 or higher")
     def test_backport(self):
         """Mock deleting the StrEnum class and test that the backport works."""
         with mock.patch.object(py_enum, "StrEnum", create=False):
