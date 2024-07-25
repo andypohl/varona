@@ -8,6 +8,7 @@ varona
    varona.data
    varona.bcftools
    varona.cli
+   varona.dataframe
    varona.ensembl
    varona.enum
    varona.extract

@@ -1,11 +1,7 @@
-varona.varona
-=============
+varona.dataframe
+================
 
-.. automodule:: varona.varona
-   :no-members:
+.. automodule:: varona.dataframe
+   :members:
    :undoc-members:
    :show-inheritance:
-
-.. autofunction:: varona.varona.vcf_dataframe
-
-.. autofunction:: varona.varona.vep_api_dataframe

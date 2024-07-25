@@ -1,5 +1,5 @@
 varona.platypus
-===========
+===============
 
 .. automodule:: varona.platypus
    :members:
