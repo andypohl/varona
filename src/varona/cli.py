@@ -5,6 +5,7 @@ import argparse
 import logging
 import pathlib
 
+import varona
 from varona import dataframe, ensembl, maf, platypus
 
 logger = logging.getLogger("varona.cli")
@@ -78,7 +79,7 @@ def main():
     args = varona_args_parser().parse_args()
     # Set the logging level
     logging.basicConfig(level=args.log_level.upper())
-    logger.info("varona version: %s", dataframe.__version__)
+    logger.info("varona version: %s", varona.__version__)
     df = platypus.platypus_dataframe(args.input_vcf, maf_method=args.maf)
     logger.info("writing CSV file: %s", str(args.output_csv))
     df.write_csv(args.output_csv)
