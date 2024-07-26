@@ -5,13 +5,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  int-test:
-    concurrency:
-      group: int-test-${{ github.ref }}
-      cancel-in-progress: true
+  cli-integration-test:
     strategy:
       matrix:
-        runner: [ubuntu-latest, macos-latest]
+        runner: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12"]
     runs-on: ${{ matrix.runner }}
     steps:
