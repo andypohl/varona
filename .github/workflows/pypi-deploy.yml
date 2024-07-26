@@ -29,11 +29,33 @@ jobs:
         uses: "google-github-actions/auth@v2"
         with:
           credentials_json: "${{ secrets.GOOGLE_CREDENTIALS_JSON }}"
+      - name: Extract tag name
+        id: extract_tag
+        # Note this removes the 'v' prefix from the tag name
+        run: echo "PKG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v2"
+      - name: "Check if the package already exists"
+        id: check_pkg_version_exists
+        env:
+          PKG_VERSION: ${{ env.PKG_VERSION }}
+        run: |
+          set +e
+          gcloud artifacts versions describe $PKG_VERSION --package=varona --location=us-central1 --repository=pohlio-pypi
+          status=$?
+          set -e
+          echo "::set-output name=status::$status"
+      - name: "Delete existing package version"
+        if: steps.check_pkg_version_exists.outputs.status == '0'
+        env:
+          PKG_VERSION: ${{ env.PKG_VERSION }}
+        run: |
+          gcloud artifacts versions delete $PKG_VERSION --quiet --package=varona --location=us-central1 --repository=pohlio-pypi
       - name: build and upload to GCP artfiacts registry
+        env:
+          PKG_VERSION: ${{ env.PKG_VERSION }}
         run: |
           python -m pip install -U pip
           python -m pip install -r .github/ci-requirements.txt
           python -m build
-          twine upload --non-interactive --skip-existing --repository-url https://us-central1-python.pkg.dev/fiery-bit-428319-p1/pohlio-pypi/ dist/*
+          twine upload --non-interactive --repository-url https://us-central1-python.pkg.dev/fiery-bit-428319-p1/pohlio-pypi/ dist/*
