@@ -11,7 +11,7 @@ on:
       - "pyproject.toml"
       - ".github/ci-requirements.txt"
       - ".github/workflows/unittest.yml"
-  pull_request:
+  pull_request_target:
     branches:
       - "main"
     paths:
