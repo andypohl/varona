@@ -1,5 +1,7 @@
 name: deploy-pages
 on:
+  release:
+    types: [published]
   push:
     paths:
       - "src/**/*.py"
