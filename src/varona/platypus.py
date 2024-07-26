@@ -62,7 +62,7 @@ def platypus_dataframe(
     # VCF part
     lst = []
     maf_func = functools.partial(maf.maf_from_method, method=maf_method)
-    if maf_method == maf.MafMethod.BCFTOOLS:
+    if bcftools.HAVE_BCFTOOLS and maf_method == maf.MafMethod.BCFTOOLS:
         with bcftools.VariantFileFilledInTags(vcf_path, fillin_tags=["MAF"]) as vf:
             for record in vf:
                 new_item = vcf_extractor(record, maf=maf_func)
