@@ -23,13 +23,11 @@ class TestQueryVepApi(unittest.TestCase):
 
     """
 
-    @classmethod
-    def setUpClass(cls):
-        cls.client = httpx.Client()
+    def setUp(self):
+        self.client = httpx.Client()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.client.close()
+    def tearDown(self):
+        self.client.close()
 
     # A chunk of two records that'll be ignored anyway.
     chunk = [
@@ -46,7 +44,7 @@ class TestQueryVepApi(unittest.TestCase):
         status_code=429,
         json={"error": "Too Many Requests"},
     )
-    response_200 = httpx.Response(status_code=200, json={"data": "success"})
+    response_200 = httpx.Response(status_code=200, json=[{"data": "success"}])
 
     @mock.patch("time.sleep", return_value=None)  # disable sleeping
     def test_query_and_retries(self, mock_sleep):
@@ -54,13 +52,13 @@ class TestQueryVepApi(unittest.TestCase):
             mock_post.side_effect = [self.response_429, self.response_200]
             # Call the function
             with self.assertLogs("varona.ensembl", level="WARNING") as cm:
-                result = ensembl.query_vep_api(self.client, chunk=self.chunk)
+                result = list(ensembl.query_vep_api(self.client, chunk=self.chunk))
                 self.assertEqual(len(cm.output), 1)  # Verify warning message
                 self.assertEqual(
                     cm.output[0],
                     "WARNING:varona.ensembl:API code 429 with Retry-After. Retrying after 1 seconds.",
                 )
-            self.assertEqual(result, {"data": "success"})  # Verify the result
+            self.assertListEqual(result, [{"data": "success"}])  # Verify the result
             self.assertEqual(mock_post.call_count, 2)  # Verify two API calls (retry)
             mock_sleep.assert_called_once_with(1)  # Verify retry delay
 
@@ -76,7 +74,9 @@ class TestQueryVepApi(unittest.TestCase):
             # Call the function
             with self.assertLogs("varona.ensembl", level="WARNING") as cm:
                 with self.assertRaises(TimeoutError):
-                    ensembl.query_vep_api(self.client, chunk=self.chunk, retries=2)
+                    list(
+                        ensembl.query_vep_api(self.client, chunk=self.chunk, retries=2)
+                    )
                 self.assertEqual(len(cm.output), 3)  # Verify warning message
                 for i in range(2):
                     self.assertEqual(
@@ -188,13 +188,11 @@ class TestLiveQuerying(unittest.TestCase):
     require opting-in by setting the environment variable `VARONA_LIVE_TESTS=1`.
     """
 
-    @classmethod
-    def setUpClass(cls):
-        cls.client = httpx.Client()
+    def setUp(self):
+        self.client = httpx.Client()
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.client.close()
+    def tearDown(self):
+        self.client.close()
 
     def test_two_records(self):
         """Tests querying the Ensembl API with two records."""
@@ -202,10 +200,12 @@ class TestLiveQuerying(unittest.TestCase):
             "1 1158631 . A G . . .",  # biallelic
             "1 91859795 . TATGTGA CATGTGA,CATGTGG . . .",  # > 2 alleles
         ]
-        data = ensembl.query_vep_api(
-            self.client,
-            chunk,
-            response_extractor=extract.default_vep_response_extractor,
+        data = list(
+            ensembl.query_vep_api(
+                self.client,
+                chunk,
+                response_extractor=extract.default_vep_response_extractor,
+            )
         )
         self.assertEqual(len(data), 2)
         expected = [

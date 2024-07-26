@@ -1,7 +1,83 @@
 import unittest
 
 import pysam
+
 from varona import extract, fake_vcf, maf
+
+example_response = {
+    "end": 1158631,
+    "transcript_consequences": [
+        {
+            "impact": "LOW",
+            "cdna_end": 833,
+            "gene_symbol": "SDF4",
+            "consequence_terms": ["synonymous_variant"],
+            "cds_start": 570,
+            "amino_acids": "D",
+            "protein_end": 190,
+            "hgnc_id": 24188,
+            "codons": "gaT/gaC",
+            "variant_allele": "G",
+            "biotype": "protein_coding",
+            "strand": -1,
+            "cdna_start": 833,
+            "transcript_id": "ENST00000360001",
+            "gene_symbol_source": "HGNC",
+            "gene_id": "ENSG00000078808",
+            "protein_start": 190,
+            "cds_end": 570,
+        }
+    ],
+    "colocated_variants": [
+        {
+            "somatic": 1,
+            "strand": 1,
+            "var_synonyms": {"COSMIC": ["COSM3750257"]},
+            "allele_string": "COSMIC_MUTATION",
+            "phenotype_or_disease": 1,
+            "id": "COSV55420653",
+            "seq_region_name": "1",
+            "end": 1158631,
+            "start": 1158631,
+        },
+        {
+            "start": 1158631,
+            "id": "rs6603781",
+            "seq_region_name": "1",
+            "end": 1158631,
+            "allele_string": "A/G/T",
+            "strand": 1,
+            "frequencies": {
+                "G": {
+                    "af": 0.9533,
+                    "afr": 0.9985,
+                    "gnomade_asj": 0.8568,
+                    "eur": 0.8608,
+                    "gnomade_eas": 0.9998,
+                    "gnomade_amr": 0.9508,
+                    "gnomade_fin": 0.8519,
+                    "gnomade_sas": 0.9485,
+                    "gnomade": 0.9144,
+                    "eas": 1,
+                    "amr": 0.9294,
+                    "gnomade_nfe": 0.8879,
+                    "sas": 0.956,
+                    "gnomade_afr": 0.9834,
+                    "gnomade_oth": 0.9053,
+                }
+            },
+        },
+    ],
+    "seq_region_name": "1",
+    "id": ".",
+    "variant_class": "SNV",
+    "most_severe_consequence": "synonymous_variant",
+    "input": "1 1158631 . A G . . .",
+    "allele_string": "A/G",
+    "strand": 1,
+    "assembly_name": "GRCh37",
+    "start": 1158631,
+}
 
 
 class TestExtractApi(unittest.TestCase):
@@ -15,80 +91,7 @@ class TestExtractApi(unittest.TestCase):
 
         It's kind of a long copy/paste for test code so it's just one item.
         """
-        item = {
-            "end": 1158631,
-            "transcript_consequences": [
-                {
-                    "impact": "LOW",
-                    "cdna_end": 833,
-                    "gene_symbol": "SDF4",
-                    "consequence_terms": ["synonymous_variant"],
-                    "cds_start": 570,
-                    "amino_acids": "D",
-                    "protein_end": 190,
-                    "hgnc_id": 24188,
-                    "codons": "gaT/gaC",
-                    "variant_allele": "G",
-                    "biotype": "protein_coding",
-                    "strand": -1,
-                    "cdna_start": 833,
-                    "transcript_id": "ENST00000360001",
-                    "gene_symbol_source": "HGNC",
-                    "gene_id": "ENSG00000078808",
-                    "protein_start": 190,
-                    "cds_end": 570,
-                }
-            ],
-            "colocated_variants": [
-                {
-                    "somatic": 1,
-                    "strand": 1,
-                    "var_synonyms": {"COSMIC": ["COSM3750257"]},
-                    "allele_string": "COSMIC_MUTATION",
-                    "phenotype_or_disease": 1,
-                    "id": "COSV55420653",
-                    "seq_region_name": "1",
-                    "end": 1158631,
-                    "start": 1158631,
-                },
-                {
-                    "start": 1158631,
-                    "id": "rs6603781",
-                    "seq_region_name": "1",
-                    "end": 1158631,
-                    "allele_string": "A/G/T",
-                    "strand": 1,
-                    "frequencies": {
-                        "G": {
-                            "af": 0.9533,
-                            "afr": 0.9985,
-                            "gnomade_asj": 0.8568,
-                            "eur": 0.8608,
-                            "gnomade_eas": 0.9998,
-                            "gnomade_amr": 0.9508,
-                            "gnomade_fin": 0.8519,
-                            "gnomade_sas": 0.9485,
-                            "gnomade": 0.9144,
-                            "eas": 1,
-                            "amr": 0.9294,
-                            "gnomade_nfe": 0.8879,
-                            "sas": 0.956,
-                            "gnomade_afr": 0.9834,
-                            "gnomade_oth": 0.9053,
-                        }
-                    },
-                },
-            ],
-            "seq_region_name": "1",
-            "id": ".",
-            "variant_class": "SNV",
-            "most_severe_consequence": "synonymous_variant",
-            "input": "1 1158631 . A G . . .",
-            "allele_string": "A/G",
-            "strand": 1,
-            "assembly_name": "GRCh37",
-            "start": 1158631,
-        }
+        item = example_response.copy()
         extracted = extract.default_vep_response_extractor(item)
         expected = {
             "contig": "1",
@@ -101,6 +104,13 @@ class TestExtractApi(unittest.TestCase):
             "gene_id": "ENSG00000078808",
             "transcript_id": "ENST00000360001",
         }
+        self.assertDictEqual(extracted, expected)
+        # delete "transcript_consequences" key
+        del item["transcript_consequences"]
+        expected["gene_id"] = None
+        expected["gene_name"] = None
+        expected["transcript_id"] = None
+        extracted = extract.default_vep_response_extractor(item)
         self.assertDictEqual(extracted, expected)
 
 

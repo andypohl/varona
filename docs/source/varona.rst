@@ -8,12 +8,13 @@ varona
    varona.data
    varona.bcftools
    varona.cli
+   varona.dataframe
    varona.ensembl
    varona.enum
    varona.extract
    varona.fake_vcf
    varona.maf
-   varona.varona
+   varona.platypus
 
 .. automodule:: varona
    :members:

@@ -27,8 +27,8 @@ class Assembly(enum.CiStrEnum):
     There are only two choices for now, GRCh37 and GRCh38.
     """
 
-    GRCh37 = enum.auto()  # aka hg19 or human_g1k_v37
-    GRCh38 = enum.auto()  # aka hg38
+    GRCH37 = "GRCH37"  # aka hg19 or human_g1k_v37
+    GRCH38 = "GRCH38"  # aka hg38
 
 
 VEP_DEFAULT_PARAMS = {
@@ -65,9 +65,10 @@ def _text_from_bgzf(file_path, mode="r"):
     This is just a helper to open .vcf.gz files with the same call signature
     as :func:`open` would on a plain .vcf file.
     """
-    with pysam.BGZFile(file_path, mode) as bgzf, io.TextIOWrapper(
-        bgzf, encoding="utf-8"
-    ) as text:
+    with (
+        pysam.BGZFile(file_path, mode) as bgzf,
+        io.TextIOWrapper(bgzf, encoding="utf-8") as text,
+    ):
         yield text
 
 
@@ -127,7 +128,7 @@ def vcf_to_vep_query_data(
 def query_vep_api(
     client: httpx.Client,
     chunk: list[str],
-    assembly: Assembly = Assembly.GRCh37,
+    assembly: Assembly = Assembly.GRCH37,
     retries=3,
     params: dict | None = VEP_DEFAULT_PARAMS,
     response_extractor: typing.Callable[[dict], dict] | None = None,
@@ -162,19 +163,21 @@ def query_vep_api(
         items returned have additional structure (sublist, subdicts) that is
         preferably flattened by this function.
     """
-    subdomain = "grch37.rest" if assembly == Assembly.GRCh37 else "rest"
+    subdomain = "grch37.rest" if assembly == Assembly.GRCH37 else "rest"
     url = f"https://{subdomain}.ensembl.org/vep/homo_sapiens/region"
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     data = json.dumps({"variants": chunk})
     retried = 0
-    while retried <= retries:
+    done = False
+    while not done and retried <= retries:
         response = client.post(url, headers=headers, data=data, params=params)
         if response.status_code == 200:
             items = response.json()
-            if response_extractor:
-                # optionally transform data
-                items = list(map(response_extractor, items))
-            return items
+            done = True
+            # optionally transform data
+            if not response_extractor:
+                response_extractor = lambda x: x  # null operation
+            yield from map(response_extractor, items)
         elif response.status_code == 429:
             retried += 1
             retry_after = response.headers.get("Retry-After")
@@ -191,4 +194,5 @@ def query_vep_api(
                 time.sleep(sleep_time)
         else:
             response.raise_for_status()
-    raise TimeoutError("too many retries")
+    if not done:
+        raise TimeoutError("too many retries")
