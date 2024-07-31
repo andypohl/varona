@@ -2,6 +2,6 @@ varona.cli
 ==========
 
 .. automodule:: varona.cli
-   :members: varona_args_parser, platypus_dataframe
+   :members: VaronaArgumentParser
    :undoc-members:
    :show-inheritance:
