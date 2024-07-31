@@ -59,3 +59,12 @@ jobs:
           python -m pip install -r .github/ci-requirements.txt
           python -m build
           twine upload --non-interactive --repository-url https://us-central1-python.pkg.dev/fiery-bit-428319-p1/pohlio-pypi/ dist/*
+
+      - name: Set IMG_VERSION for Docker Deploy
+        run: echo "IMG_VERSION=${{ env.PKG_VERSION }}" > img_version.txt
+
+      - name: Upload IMG_VERSION artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: img_version
+          path: img_version.txt
