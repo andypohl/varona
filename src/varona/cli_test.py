@@ -1,14 +1,14 @@
 """Tests for the CLI module.
 """
 
+import io
 import pathlib
+import sys
 import unittest
 from unittest import mock
 
-import polars as pl
-import polars.testing as plt
-
-from varona import cli, ensembl, fake_vcf, maf
+import varona
+from varona import cli, ensembl, maf
 
 
 class TestVaronaArgsParser(unittest.TestCase):
@@ -64,3 +64,17 @@ class TestVaronaArgsParser(unittest.TestCase):
                 ["--maf", method.name, "input.vcf", "output.csv"]
             )
             self.assertEqual(args.maf, method)
+
+    @mock.patch("sys.argv", ["varona", "--version", "input.vcf", "output.csv"])
+    def test_version(self):
+        args = cli.varona_args_parser().parse_args()
+        self.assertEqual(args.version, True)
+
+
+class TestMainVersion(unittest.TestCase):
+
+    @mock.patch("sys.argv", ["varona", "--version"])
+    def test_version(self, *_):
+        with mock.patch("sys.stdout", new=io.StringIO()) as mock_stdout:
+            cli.main()
+            self.assertEqual(mock_stdout.getvalue().strip(), varona.__version__)

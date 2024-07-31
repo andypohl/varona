@@ -48,6 +48,7 @@ def platypus_dataframe(
     genome_assembly: ensembl.Assembly = ensembl.Assembly.GRCH37,
     vcf_extractor=extract.platypus_vcf_record_extractor,
     api_extractor=extract.default_vep_response_extractor,
+    no_vep: bool = False,
 ) -> pl.DataFrame:
     """Read a Platypus VCF file into a DataFrame.
 
@@ -57,6 +58,7 @@ def platypus_dataframe(
     :param genome_assembly: The genome assembly used in the Ensembl VEP API.
     :param vcf_extractor: The function to extract data from the VCF.
     :param api_extractor: The function to extract data from the VEP API response.
+    :param no_vep: Skip querying the VEP API.
     :return: A DataFrame with the VCF data.
     """
     # VCF part
@@ -70,6 +72,8 @@ def platypus_dataframe(
     else:
         lst = list(dataframe._vcf_rows(vcf_path, vcf_extractor))
     vcf_df = pl.DataFrame(lst, schema=VCF_DF_SCHEMA)
+    if no_vep:
+        return vcf_df
     # API part
     chunks = list(ensembl.vcf_to_vep_query_data(vcf_path))
     n_chunks = len(chunks)
