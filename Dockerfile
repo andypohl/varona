@@ -13,3 +13,5 @@ ENV PATH=/root/.local/bin:$PATH
 
 # install varona
 RUN pipx install --pip-args='--extra-index-url https://pypi.pohl.io/simple/' varona 
+
+ENTRYPOINT ["/bin/bash"]
