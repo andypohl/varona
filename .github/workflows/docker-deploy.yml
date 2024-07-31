@@ -29,21 +29,17 @@ jobs:
 
       - name: "Check if the image already exists"
         id: check_img_version_exists
-        env:
-          IMG_VERSION: ${{ env.IMG_VERSION }}
         run: |
           set +e
-          gcloud artifacts docker images describe us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:$IMG_VERSION
+          gcloud artifacts docker images describe us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:${{ env.IMG_VERSION }}
           status=$?
           set -e
           echo "::set-output name=status::$status"
 
       - name: "Delete existing package version"
         if: steps.check_img_version_exists.outputs.status == '0'
-        env:
-          IMG_VERSION: ${{ env.IMG_VERSION }}
         run: |
-          gcloud artifacts docker images delete us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:$IMG_VERSION
+          gcloud artifacts docker images delete us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:${{ env.IMG_VERSION }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -56,11 +52,9 @@ jobs:
           gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Docker build/push to GCP artfiacts registry
-        env:
-          IMG_VERSION: ${{ env.IMG_VERSION }}
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:$IMG_VERSION,us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:latest
+          tags: us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:${{ env.IMG_VERSION }},us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:latest
           platforms: linux/amd64,linux/arm64
