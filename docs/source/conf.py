@@ -12,11 +12,12 @@ from enum import Enum
 from sphinx.application import Sphinx
 
 sys.path.insert(0, os.path.abspath("../../src"))
+from varona import __version__  # noqa: E402
 
 project = "Varona"
 copyright = "2024, Andy Pohl"
 author = "Andy Pohl"
-release = "0.0.3"
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
