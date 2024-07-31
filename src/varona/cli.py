@@ -15,9 +15,15 @@ logger = logging.getLogger("varona.cli")
 class VaronaArgumentParser(argparse.ArgumentParser):
     """Varona argument parser.
 
-    Subclass of :class:`argparse.ArgumentParser` that essentially
-    allows the required positional arguments to be optional in the
-    presence of the ``--version`` flag.
+    Subclass of :class:`argparse.ArgumentParser` that essentially allows the
+    required positional arguments to be optional in the presence of the
+    ``--version`` flag.
+
+    .. warning::
+
+        Due to the way this behavior is implemented, the
+        :meth:`parse_args` method can only be called once, and calling
+        twice will raise a :class:`RuntimeError`.
 
     The CLI ``--help`` message is shown below:
 
@@ -56,6 +62,8 @@ class VaronaArgumentParser(argparse.ArgumentParser):
             description="Annotate a VCF file.", prog="varona"
         )
         self._add_optional_args()
+        # hacky flag to make sure .parse_args() is called only once
+        self.args_parsed = False
 
     def _add_optional_args(self):
         """Add optional arguments to the parser."""
@@ -121,12 +129,16 @@ class VaronaArgumentParser(argparse.ArgumentParser):
         :return: The parsed arguments.
         """
         # Add positional arguments if --version is not used
+        if self.args_parsed:
+            raise RuntimeError("parse_args() called more than once")
         initial_args, _ = self.parse_known_args(args=args, namespace=namespace)
         if initial_args.version:
             return initial_args
         self._add_positional_args()
         # something here isn't quite right, the
-        return super().parse_args(args=args, namespace=namespace)
+        parsed = super().parse_args(args=args, namespace=namespace)
+        self.args_parsed = True
+        return parsed
 
 
 def main():
