@@ -13,28 +13,41 @@ from varona import cli, ensembl, maf
 
 class TestVaronaArgsParser(unittest.TestCase):
 
-    def setUp(self):
-        self.parser = cli.varona_args_parser()
-
+    @unittest.mock.patch("sys.argv", ["varona", "--help"])
     def test_help_message(self):
         with self.assertRaises(SystemExit):
-            self.parser.parse_args(["--help"])
+            cli.VaronaArgumentParser().parse_args()
 
+    @unittest.mock.patch("sys.argv", ["varona", "input.vcf", "output.csv"])
     def test_positional_arguments(self):
-        args = self.parser.parse_args(["input.vcf", "output.csv"])
+        args = cli.VaronaArgumentParser().parse_args()
         self.assertEqual(args.input_vcf, pathlib.Path("input.vcf"))
         self.assertEqual(args.output_csv, pathlib.Path("output.csv"))
 
+    @unittest.mock.patch("sys.argv", ["varona", "input.vcf", "output.csv"])
     def test_log_level_default(self):
-        args = self.parser.parse_args(["input.vcf", "output.csv"])
+        args = cli.VaronaArgumentParser().parse_args()
         self.assertEqual(args.log_level, "warning")
 
-    def test_log_level_choices(self):
+    def test_log_level_patching(self):
         for level in ["debug", "info", "warning", "error"]:
-            args = self.parser.parse_args(
-                ["--log-level", level, "input.vcf", "output.csv"]
-            )
+            with mock.patch(
+                "sys.argv", ["varona", "--log-level", level, "input.vcf", "output.csv"]
+            ):
+                parser = cli.VaronaArgumentParser()
+                args = parser.parse_args()
+                self.assertEqual(args.log_level, level)
+
+    def test_log_level(self):
+        for level in ["debug", "info", "warning", "error"]:
+            parser = cli.VaronaArgumentParser()
+            args = parser.parse_args(["--log-level", level, "input.vcf", "output.csv"])
             self.assertEqual(args.log_level, level)
+
+    def test_supplied_args_fail_2(self):
+        parser = cli.VaronaArgumentParser()
+        # with self.assertRaises(SystemExit):
+        parser.parse_args(["--log-level", "debug", "input.vcf", "output.csv"])
 
     def test_assembly_default(self):
         args = self.parser.parse_args(["input.vcf", "output.csv"])
@@ -65,9 +78,8 @@ class TestVaronaArgsParser(unittest.TestCase):
             )
             self.assertEqual(args.maf, method)
 
-    @mock.patch("sys.argv", ["varona", "--version", "input.vcf", "output.csv"])
     def test_version(self):
-        args = cli.varona_args_parser().parse_args()
+        args = self.parser.parse_args(["--version"])
         self.assertEqual(args.version, True)
 
 

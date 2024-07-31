@@ -12,8 +12,12 @@ from varona import ensembl, maf, platypus
 logger = logging.getLogger("varona.cli")
 
 
-def varona_args_parser() -> argparse.ArgumentParser:
-    """Setup for the varona CLI.
+class VaronaArgumentParser(argparse.ArgumentParser):
+    """Varona argument parser.
+
+    Subclass of :class:`argparse.ArgumentParser` that essentially
+    allows the required positional arguments to be optional in the
+    presence of the ``--version`` flag.
 
     The CLI ``--help`` message is shown below:
 
@@ -45,70 +49,92 @@ def varona_args_parser() -> argparse.ArgumentParser:
           --vep-data VEP_DATA   Path to VEP output file (currently unused)
           --version             Show program's version number and exit
 
-    :return: the configured argument parser.
     """
-    parser = argparse.ArgumentParser(description="Annotate a VCF file.", prog="varona")
-    parser.add_argument(
-        "--log-level",
-        type=str,
-        choices=["debug", "info", "warning", "error"],
-        default="warning",
-        help="Set the logging level (default: WARNING)",
-    )
-    # Optional arguments using Enum classes
-    parser.add_argument(
-        "--assembly",
-        type=ensembl.Assembly,
-        choices=list(ensembl.Assembly),
-        default=ensembl.Assembly.GRCH37,
-        help="genome assembly used in Ensembl VEP API (default: GRCh37)",
-    )
-    parser.add_argument(
-        "--maf",
-        type=maf.MafMethod,
-        choices=list(maf.MafMethod),
-        default=maf.MafMethod.SAMPLES,
-        help="MAF calculation method (default: SAMPLES)",
-    )
-    parser.add_argument(
-        "--no-vep",
-        action="store_true",
-        help="Skip VEP API querying (no effect if --vep-data is provided)",
-    )
-    parser.add_argument(
-        "--vep-data",
-        type=pathlib.Path,
-        help="Path to VEP output file (currently unused)",
-        default=None,
-    )
-    parser.add_argument(
-        "--version",
-        action="store_true",
-        help="Show program's version number and exit",
-    )
-    initial_args, _ = parser.parse_known_args()
-    if initial_args.version:
-        return parser
-    # Positional arguments added if --version is not used
-    parser.add_argument(
-        "input_vcf",
-        type=pathlib.Path,
-        help="Path to the input VCF file",
-    )
-    parser.add_argument(
-        "output_csv", type=pathlib.Path, help="Path to the output CSV file"
-    )
-    return parser
+
+    def __init__(self):
+        super(VaronaArgumentParser, self).__init__(
+            description="Annotate a VCF file.", prog="varona"
+        )
+        self._add_optional_args()
+
+    def _add_optional_args(self):
+        """Add optional arguments to the parser."""
+        self.add_argument(
+            "--log-level",
+            type=str,
+            choices=["debug", "info", "warning", "error"],
+            default="warning",
+            help="Set the logging level (default: WARNING)",
+        )
+        # Optional arguments using Enum classes
+        self.add_argument(
+            "--assembly",
+            type=ensembl.Assembly,
+            choices=list(ensembl.Assembly),
+            default=ensembl.Assembly.GRCH37,
+            help="genome assembly used in Ensembl VEP API (default: GRCh37)",
+        )
+        self.add_argument(
+            "--maf",
+            type=maf.MafMethod,
+            choices=list(maf.MafMethod),
+            default=maf.MafMethod.SAMPLES,
+            help="MAF calculation method (default: SAMPLES)",
+        )
+        self.add_argument(
+            "--no-vep",
+            action="store_true",
+            help="Skip VEP API querying (no effect if --vep-data is provided)",
+        )
+        self.add_argument(
+            "--vep-data",
+            type=pathlib.Path,
+            help="Path to VEP output file (currently unused)",
+            default=None,
+        )
+        self.add_argument(
+            "--version",
+            action="store_true",
+            help="Show program's version number and exit",
+        )
+        initial_args, _ = self.parse_known_args()
+
+    def _add_positional_args(self):
+        # Positional arguments added if --version is not used
+        self.add_argument(
+            "input_vcf",
+            type=pathlib.Path,
+            help="Path to the input VCF file",
+        )
+        self.add_argument(
+            "output_csv", type=pathlib.Path, help="Path to the output CSV file"
+        )
+
+    def parse_args(self, args=None, namespace=None):
+        """Parse command-line arguments.
+
+        If the ``--version`` flag is not used, then the positional
+        arguments are added to the parser.
+
+        :param args: List of strings to parse. Default is taken from sys.argv.
+        :param namespace: An object to take the attributes. Default is a new empty namespace.
+        :return: The parsed arguments.
+        """
+        # Add positional arguments if --version is not used
+        initial_args, _ = self.parse_known_args(args=args, namespace=namespace)
+        if initial_args.version:
+            return initial_args
+        self._add_positional_args()
+        # something here isn't quite right, the
+        return super().parse_args(args=args, namespace=namespace)
 
 
 def main():
-    parser = varona_args_parser()
-    # Extra gymnasics to handle the case where --version is used
-    # seems a bit delicate
-    if parser.parse_known_args()[0].version:
+    parser = VaronaArgumentParser()
+    args = parser.parse_args()
+    if args.version:
         print(f"{varona.__version__}")
         return
-    args = parser.parse_args()
     # Set the logging level
     logging.basicConfig(level=args.log_level.upper())
     logger.info("varona version: %s", varona.__version__)
