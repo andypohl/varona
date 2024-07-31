@@ -1,0 +1,66 @@
+# Builds and deploys a Docker image to GCP Artifact Registry
+name: docker-deploy
+
+on:
+  workflow_run:
+    workflows: ["pypi-deploy"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: "auth"
+        name: "Authenticate with Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GOOGLE_CREDENTIALS_JSON }}"
+
+      - name: Extract tag name for image version
+        id: extract_tag
+        # Note this removes the 'v' prefix from the tag name
+        run: echo "IMG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
+
+      - name: "Check if the image already exists"
+        id: check_img_version_exists
+        env:
+          IMG_VERSION: ${{ env.IMG_VERSION }}
+        run: |
+          set +e
+          gcloud artifacts docker images describe us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:$IMG_VERSION
+          status=$?
+          set -e
+          echo "::set-output name=status::$status"
+
+      - name: "Delete existing package version"
+        if: steps.check_img_version_exists.outputs.status == '0'
+        env:
+          IMG_VERSION: ${{ env.IMG_VERSION }}
+        run: |
+          gcloud artifacts docker images delete us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:$IMG_VERSION
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: GCP docker auth
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Docker build/push to GCP artfiacts registry
+        env:
+          IMG_VERSION: ${{ env.IMG_VERSION }}
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:$IMG_VERSION,us-central1-docker.pkg.dev/fiery-bit-428319-p1/pohlio-docker/varona:latest
+          platforms: linux/amd64,linux/arm64

@@ -4,7 +4,6 @@ All of the functions and classes in this module are imported into the
 top-level library namespace.
 """
 
-import functools
 import logging
 import pathlib
 import typing
@@ -13,7 +12,7 @@ import httpx
 import polars as pl
 import pysam
 
-from varona import bcftools, ensembl, extract, maf
+from varona import ensembl
 
 logger = logging.getLogger("varona.varona")
 
