@@ -19,10 +19,16 @@ jobs:
         with:
           credentials_json: "${{ secrets.GOOGLE_CREDENTIALS_JSON }}"
 
-      - name: Extract tag name for image version
-        id: extract_tag
-        # Note this removes the 'v' prefix from the tag name
-        run: echo "IMG_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+      - name: Download IMG_VERSION artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: img_version
+          path: .
+
+      - name: Read IMG_VERSION
+        id: read-img-version
+        run: |
+          echo "IMG_VERSION=$(cat img_version.txt)" >> $GITHUB_ENV
 
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v2"
