@@ -11,6 +11,7 @@ from varona.utils import split
 
 
 class TestSplit(fake_vcf.TestWithTempDir):
+    """Test splitting a VCF file."""
 
     records = [
         {
@@ -97,6 +98,8 @@ class TestSplit(fake_vcf.TestWithTempDir):
 
 
 class TestVcfSplitArgs(unittest.TestCase):
+    """Test the argument parser for the vcf split CLI."""
+
     def setUp(self):
         self.parser = split.vcf_split_args()
 

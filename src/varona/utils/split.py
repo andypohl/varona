@@ -67,6 +67,7 @@ def split_vcf(
 
 
 def vcf_split_args() -> argparse.ArgumentParser:
+    """Set up the argument parser for the vcf_split CLI."""
     parser = argparse.ArgumentParser(
         description="Split a VCF file into smaller pieces.", prog="vcf_split"
     )
