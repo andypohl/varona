@@ -15,6 +15,7 @@ varona
    varona.fake_vcf
    varona.maf
    varona.platypus
+   varona.utils
 
 .. automodule:: varona
    :members:

@@ -6,7 +6,34 @@ from varona.utils import split
 
 
 def vcf_split_args() -> argparse.ArgumentParser:
-    """Set up the argument parser for the vcf_split CLI."""
+    """Set up the argument parser for the vcf_split CLI.
+
+    .. code-block:: text
+
+        usage: vcf_split
+            [-h --help]
+            [--log-level {debug,info,warning,error}]
+            [--out-dir OUT_DIR]
+            [--compress]
+            (--chunk-size CHUNK_SIZE | --n-chunks N_CHUNKS)
+            in_vcf
+
+        Split a VCF file into smaller pieces.
+
+        positional arguments:
+          in_vcf                The VCF file to split.
+
+        options:
+          -h, --help            show this help message and exit
+          --log-level {debug,info,warning,error}
+                                Set the logging level (default: WARNING)
+          --out-dir OUT_DIR     The directory to save the split VCF files.
+          --compress            Whether to compress the output files.
+          --chunk-size CHUNK_SIZE
+                                The number of records per chunk.
+          --n-chunks N_CHUNKS   The number of chunks to split the VCF into.
+
+    """
     parser = argparse.ArgumentParser(
         description="Split a VCF file into smaller pieces.", prog="vcf_split"
     )
