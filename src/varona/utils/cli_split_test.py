@@ -4,14 +4,14 @@
 import pathlib
 import unittest
 
-from varona.utils import cli_vcf_split
+from varona.utils import cli_split
 
 
 class TestVcfSplitArgs(unittest.TestCase):
     """Test the argument parser for the vcf split CLI."""
 
     def setUp(self):
-        self.parser = cli_vcf_split.vcf_split_args()
+        self.parser = cli_split.vcf_split_args()
 
     def test_in_vcf_argument(self):
         args = self.parser.parse_args(["input.vcf", "--chunk-size", "100"])
