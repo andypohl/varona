@@ -24,6 +24,12 @@ def vcf_split_args() -> argparse.ArgumentParser:
         default=pathlib.Path.cwd(),
         help="The directory to save the split VCF files.",
     )
+    parser.add_argument(
+        "--compress",
+        action="store_true",
+        default=True,
+        help="Whether to compress the output files.",
+    )
     split_group = parser.add_mutually_exclusive_group(required=True)
     split_group.add_argument(
         "--chunk-size",
@@ -41,9 +47,16 @@ def vcf_split_args() -> argparse.ArgumentParser:
 
 
 def cli_main():
+    """Entrypoint for the vcf_split CLI."""
     args = vcf_split_args().parse_args()
     logging.basicConfig(level=args.log_level.upper())
-    split.split_vcf(args.in_vcf, args.out_dir, args.chunk_size, args.n_chunks)
+    split.split_vcf(
+        args.in_vcf,
+        args.out_dir,
+        chunk_size=args.chunk_size,
+        n_chunks=args.n_chunks,
+        compress=args.compress,
+    )
 
 
 if __name__ == "__main__":

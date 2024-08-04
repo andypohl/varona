@@ -30,6 +30,7 @@ dependencies = ["httpx", "polars", "pysam"]
 
 [project.scripts]
 varona = "varona.cli:main"
+vcf_split = "varona.utils.cli_vcf_split:main"
 
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx-rtd-theme", "sphinx-multiversion"]

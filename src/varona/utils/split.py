@@ -17,6 +17,7 @@ def split_vcf(
     out_dir: pathlib.Path,
     chunk_size: int | None = None,
     n_chunks: int | None = None,
+    compress: bool = True,
 ) -> list[pathlib.Path]:
     """Split a VCF file into smaller chunks.
 
@@ -25,6 +26,7 @@ def split_vcf(
     :param chunk_size: The number of records per chunk.
     :param n_chunks: The number of chunks to split the VCF into.  If set,
         then ``chunk_size`` is ignored.
+    :param compress: Whether to compress the output files.
     :return: The list of paths to the split VCF files.
     """
     if not chunk_size and not n_chunks:
@@ -56,10 +58,12 @@ def split_vcf(
                         out_vcf.write(record)
                     except StopIteration:
                         break
-            gz_path = out_path.with_suffix(".vcf.gz")
-            pysam.tabix_compress(out_path, gz_path)
-            splits.append(gz_path)
-            out_path.unlink()
-            logger.info(f"Wrote {gz_path}")
-    logger.info(f"Finished splitting {vcf_path}")
+            if compress:
+                gz_path = out_path.with_suffix(".vcf.gz")
+                pysam.tabix_compress(out_path, gz_path)
+                out_path.unlink()
+                out_path = gz_path
+            splits.append(out_path)
+            logger.info(f"Wrote {str(out_path)}")
+    logger.info(f"Finished splitting {str(vcf_path)}")
     return splits
