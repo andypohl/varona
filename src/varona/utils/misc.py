@@ -6,8 +6,8 @@ import pathlib
 def multi_suffix_stem(file_path: pathlib.Path) -> str:
     """For paths like ``/path/to/file.vcf.gz``, return ``file``.
 
-    The :method:`pathlib.Path.stem` method is annoying that it
-    only removes the last suffix.  This function removes all
+    The :attr:`pathlib.Path.stem` attribute is annoying that it
+    only has the last suffix.  This function removes all
     suffixes.
 
     This function is a bit aggressive, removing everything
