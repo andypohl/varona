@@ -80,8 +80,14 @@ def platypus_dataframe(
         return vcf_df
     vep_df = None
     if vep_json_path:
-        vep_df = ensembl.import_vep_data(
-            vep_json_path, extractor=extract.default_vep_cli_json_extractor
+        vep_df = pl.DataFrame(
+            list(
+                ensembl.import_vep_data(
+                    vep_json_path,
+                    json_extractor=extract.default_vep_cli_json_extractor,
+                )
+            ),
+            schema=API_DF_SCHEMA,
         )
     else:
         # API part

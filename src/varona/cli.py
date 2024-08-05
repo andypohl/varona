@@ -154,7 +154,7 @@ def main():
         args.input_vcf,
         maf_method=args.maf,
         no_vep=args.no_vep,
-        vep_data=args.vep_data,
+        vep_json_path=args.vep_data,
     )
     logger.info("writing CSV file: %s", str(args.output_csv))
     df.write_csv(args.output_csv)
