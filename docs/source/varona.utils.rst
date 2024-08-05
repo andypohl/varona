@@ -13,4 +13,5 @@ varona.utils
    varona.utils.cli_split
    varona.utils.misc
    varona.utils.split
+   varona.utils.fix_vcf
 
