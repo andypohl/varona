@@ -21,7 +21,7 @@ Below is the usage information for the varona command:
     --maf {FR,SAMPLES,BCFTOOLS}
                           MAF calculation method (default: SAMPLES)
     --no-vep              Skip VEP API querying (no effect if --vep-data is provided)
-    --vep-data VEP_DATA   Path to VEP output file (currently unused)
+    --vep-data VEP_DATA   Path to VEP output file
     --version             Show program's version number and exit
 
 The ``--maf`` option gives three options for calculating a minor allele

@@ -49,6 +49,7 @@ def platypus_dataframe(
     vcf_extractor=extract.platypus_vcf_record_extractor,
     api_extractor=extract.default_vep_response_extractor,
     no_vep: bool = False,
+    vep_json_path: pathlib.Path | None = None,
 ) -> pl.DataFrame:
     """Read a Platypus VCF file into a DataFrame.
 
@@ -59,6 +60,8 @@ def platypus_dataframe(
     :param vcf_extractor: The function to extract data from the VCF.
     :param api_extractor: The function to extract data from the VEP API response.
     :param no_vep: Skip querying the VEP API.
+    :param vep_json_path: Path to the VEP output file from running VEP locally,
+        (bypasses querying API).
     :return: A DataFrame with the VCF data.
     """
     # VCF part
@@ -72,22 +75,31 @@ def platypus_dataframe(
     else:
         lst = list(dataframe._vcf_rows(vcf_path, vcf_extractor))
     vcf_df = pl.DataFrame(lst, schema=VCF_DF_SCHEMA)
-    if no_vep:
+    if no_vep and vep_json_path is None:
+        # no_vep ignored if vep_json_path is provided
         return vcf_df
-    # API part
-    chunks = list(ensembl.vcf_to_vep_query_data(vcf_path))
-    n_chunks = len(chunks)
-    api_df = pl.DataFrame({k: [] for k in API_DF_SCHEMA.keys()}, schema=API_DF_SCHEMA)
-    with httpx.Client(
-        limits=httpx.Limits(max_connections=5, max_keepalive_connections=5),
-        timeout=httpx.Timeout(float(timeout)),
-    ) as client:
-        for ix, chunk in enumerate(chunks, start=1):
-            chunk_df = dataframe.vep_api_dataframe(
-                client, chunk, genome_assembly, api_extractor, schema=API_DF_SCHEMA
-            )
-            api_df = api_df.vstack(chunk_df)
-            logger.info(f"processed {ix}/{n_chunks} chunks from VEP API")
-    api_df.rechunk()
-    combined_df = vcf_df.join(api_df, on=["contig", "pos", "ref", "alt"], how="left")
+    vep_df = None
+    if vep_json_path:
+        vep_df = ensembl.import_vep_data(
+            vep_json_path, extractor=extract.default_vep_cli_json_extractor
+        )
+    else:
+        # API part
+        chunks = list(ensembl.vcf_to_vep_query_data(vcf_path))
+        n_chunks = len(chunks)
+        vep_df = pl.DataFrame(
+            {k: [] for k in API_DF_SCHEMA.keys()}, schema=API_DF_SCHEMA
+        )
+        with httpx.Client(
+            limits=httpx.Limits(max_connections=5, max_keepalive_connections=5),
+            timeout=httpx.Timeout(float(timeout)),
+        ) as client:
+            for ix, chunk in enumerate(chunks, start=1):
+                chunk_df = dataframe.vep_api_dataframe(
+                    client, chunk, genome_assembly, api_extractor, schema=API_DF_SCHEMA
+                )
+                vep_df = vep_df.vstack(chunk_df)
+                logger.info(f"processed {ix}/{n_chunks} chunks from VEP API")
+        vep_df.rechunk()
+    combined_df = vcf_df.join(vep_df, on=["contig", "pos", "ref", "alt"], how="left")
     return combined_df

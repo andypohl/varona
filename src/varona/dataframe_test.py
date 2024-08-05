@@ -90,6 +90,38 @@ class TestVcfDataFrame(fake_vcf.TestWithTempDir):
         )
         plt.assert_frame_equal(df, expected_df)
 
+    def test_vcf_dataframe_gz(self):
+        """Tests the high-level vcf_dataframe() function on compressed VCF."""
+        compressed_path = self.path.with_suffix(".vcf.gz")
+        fake = fake_vcf.FakeVcfFile(compressed_path, records=self.records)
+        fake.write_vcf()
+        self.assertTrue(fake.path.exists())
+
+        # two different extractors makes two different dataframes
+
+        df = dataframe.vcf_dataframe(
+            fake.path, self.vcf_extractor_a, schema=self.schema_a
+        )
+        expected_df = pl.DataFrame(
+            {
+                "pos": [100, 150],
+                "qual": [200, 200],
+            },
+            schema=self.schema_a,
+        )
+        plt.assert_frame_equal(df, expected_df)
+        df = dataframe.vcf_dataframe(
+            fake.path, self.vcf_extractor_b, schema=self.schema_b
+        )
+        expected_df = pl.DataFrame(
+            {
+                "pos": [100, 150],
+                "alleles": ["A/G/C", "A/G"],
+            },
+            schema=self.schema_b,
+        )
+        plt.assert_frame_equal(df, expected_df)
+
     def test_vcf_dataframe_empty(self):
         """Try on no records."""
         fake = fake_vcf.FakeVcfFile(self.path, records=[])

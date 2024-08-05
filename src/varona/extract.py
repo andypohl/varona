@@ -71,6 +71,80 @@ def default_vep_response_extractor(response_item: dict) -> dict:
     return new_item
 
 
+def default_vep_cli_json_extractor(response_item: dict) -> dict:
+    """An example function to extract VEP data from the CLI.
+
+    When using the VEP CLI, the output is a file where each line is a JSON
+    record.  The format of the JSON record is similar to the API response,
+    but not identical.  Using the command below with v112 Ensemble VEP,
+    the translations are listed in the table below the command:
+
+    .. code-block:: bash
+
+        vep \\
+            -i some.vcf \\
+            -o some.json.gz \\
+            --variant_class \\
+            --nearest symbol \\
+            --pick \\
+            --stats_text \\
+            --stats_file some_vep.txt \\
+            --compress_output bgzip \\
+            --json --assembly GRCh37 \\
+            --species homo_sapiens \\
+            --cache --cache_version 112 \\
+            --dir_cache /data/vep_cache/112/GRCh37
+
+    
+    +-------------------+--------------------------------------------+
+    | extracted key     | original response_item key                 |
+    +===================+============================================+
+    | contig            | seq_region_name                            |
+    +-------------------+--------------------------------------------+
+    | pos               | start                                      |
+    +-------------------+--------------------------------------------+
+    | ref               | allele_string (first allele, '/' sep)      |
+    +-------------------+--------------------------------------------+
+    | alt (comma-sep)   | allele_string (all other alleles, '/' sep) |
+    +-------------------+--------------------------------------------+
+    | type              | variant_class                              |
+    +-------------------+--------------------------------------------+
+    | effect            | most_severe_consequence                    |
+    +-------------------+--------------------------------------------+
+    | gene_name         | nearest[0]                                 |
+    +-------------------+--------------------------------------------+
+    | gene_id           | transcript_consequences[0].gene_id         |
+    +-------------------+--------------------------------------------+
+    | transcript_id     | transcript_consequences[0].transcript_id   |
+    +-------------------+--------------------------------------------+
+
+    :param response_item: The VEP API response is a list of dictionaries,
+        and this is one of the items in the list.
+    :return: A dictionary with the VEP data transformed into a preferable format.
+    """
+    new_item = {}
+    new_item["contig"] = response_item["seq_region_name"]
+    new_item["pos"] = response_item["start"]
+    alleles = response_item["allele_string"].split("/")
+    new_item["ref"] = alleles[0]
+    new_item["alt"] = ",".join(alleles[1:])
+    new_item["type"] = response_item["variant_class"]
+    new_item["effect"] = response_item["most_severe_consequence"]
+    if "nearest" not in response_item:
+        new_item["gene_name"] = None
+    else:
+        new_item["gene_name"] = response_item["nearest"][0]
+    if "transcript_consequences" not in response_item:
+        new_item["gene_id"] = None
+        new_item["transcript_id"] = None
+    else:
+        new_item["gene_id"] = response_item["transcript_consequences"][0]["gene_id"]
+        new_item["transcript_id"] = response_item["transcript_consequences"][0][
+            "transcript_id"
+        ]
+    return new_item
+
+
 def platypus_vcf_record_extractor(
     record: pysam.VariantRecord,
     **addl_cols: typing.Callable[[pysam.VariantRecord], typing.Union[int, float, str]],

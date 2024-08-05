@@ -52,9 +52,9 @@ def vcf_split_args() -> argparse.ArgumentParser:
         help="The directory to save the split VCF files.",
     )
     parser.add_argument(
-        "--compress",
+        "--no-compress",
         action="store_true",
-        default=True,
+        default=False,
         help="Whether to compress the output files.",
     )
     split_group = parser.add_mutually_exclusive_group(required=True)
@@ -82,7 +82,7 @@ def cli_main():
         args.out_dir,
         chunk_size=args.chunk_size,
         n_chunks=args.n_chunks,
-        compress=args.compress,
+        compress=not args.no_compress,
     )
 
 

@@ -26,23 +26,23 @@ Additionally, there are some options that can be used:
 
 ```bash
 varona --help
-## usage: varona [-h] [--log-level {debug,info,warning,error}]
-##     [--assembly {GRCh37,GRCh38}]
-##     [--maf {FR,BCFTOOLS,SAMPLES}] input_vcf output_csv
+## usage: varona [-h] [--log-level {debug,info,warning,error}] 
+##   [--assembly {GRCH37,GRCH38}]
+##   [--maf {FR,SAMPLES,BCFTOOLS}]
+##   [--no-vep] [--vep-data VEP_DATA] [--version]
 ## 
 ## Annotate a VCF file.
-## 
-## positional arguments:
-##   input_vcf             Path to the input VCF file
-##   output_csv            Path to the output CSV file
 ## 
 ## options:
 ##   -h, --help            show this help message and exit
 ##   --log-level {debug,info,warning,error}
 ##                         Set the logging level (default: WARNING)
-##   --assembly {GRCh37,GRCh38}
+##   --assembly {GRCH37,GRCH38}
 ##                         genome assembly used in Ensembl VEP API (default: GRCh37)
-##   --maf {FR,BCFTOOLS,SAMPLES}
+##   --maf {FR,SAMPLES,BCFTOOLS}
 ##                         MAF calculation method (default: SAMPLES)
+##   --no-vep              Skip VEP API querying (no effect if --vep-data is provided)
+##   --vep-data VEP_DATA   Path to VEP output file
+##   --version             Show program's version number and exit
 ## 
 ```

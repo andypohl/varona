@@ -22,6 +22,9 @@ import unittest
 
 import pysam
 
+from varona import ensembl
+from varona.utils import fix_vcf
+
 
 class FakeVcfFile:
     """Make a minimal fake VCF files for testing.
@@ -38,6 +41,11 @@ class FakeVcfFile:
         records: list[dict] = [],
     ):
         self.path = path
+        self.compressed = False
+        self.uncompressed_path = path
+        if self.path.suffix == ".gz":
+            self.compressed = True
+            self.uncompressed_path = path.with_suffix("")
         self.make_header()
         self.header.add_samples(samples)
         self.records = []
@@ -83,9 +91,11 @@ class FakeVcfFile:
 
     def write_vcf(self):
         """Write the VCF file with the header and records."""
-        with pysam.VariantFile(self.path, "w", header=self.header) as vcf:
+        with pysam.VariantFile(self.uncompressed_path, "w", header=self.header) as vcf:
             for record in self.records:
                 vcf.write(record)
+        if self.compressed:
+            pysam.tabix_compress(self.uncompressed_path, self.path)
 
 
 class FakePlatypusVcfFile(FakeVcfFile):
@@ -150,11 +160,7 @@ class FakePlatypusVcfFile(FakeVcfFile):
         header = pysam.VariantHeader()
         for line in self._header_preamble.split("\n"):
             header.add_line(line)
-        with pkg_resources.open_text("varona.data", "human_g1k_v37.fasta.fai") as f:
-            for line in f:
-                name, length = line.split("\t")[:2]
-                header.contigs.add(name, length)
-        self.header = header
+        self.header = fix_vcf.vcf_header_inject_contigs(header, ensembl.Assembly.GRCH37)
 
     def add_records_from_lines(self, lines):
         """Add records to the VCF file from a list of lines.

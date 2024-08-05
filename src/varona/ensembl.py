@@ -6,6 +6,7 @@ the data for querying the Ensembl API.
 
 import contextlib
 import csv
+import functools
 import io
 import json
 import logging
@@ -196,3 +197,37 @@ def query_vep_api(
             response.raise_for_status()
     if not done:
         raise TimeoutError("too many retries")
+
+
+def import_vep_data(
+    json_path: pathlib.Path,
+    json_extractor: typing.Callable[[dict], dict] | None = None,
+):
+    """Imports VEP data from a JSON file where VEP was run locallly.
+
+    At the record level, the format of the JSON file is the same as the API
+    response, where each line is a record dictionary.
+
+    :param json_path: Path to the JSON file.
+    :param json_extractor: Optional function to transform data from the API
+        response. Without this, there is probably more fields in the response
+        with fields without the desired names. Additionally, the default dict
+        items returned have additional structure (sublist, subdicts) that is
+        preferably flattened by this function.
+    """
+    file_opener = (
+        functools.partial(pysam.BGZFile, mode="r")
+        if json_path.suffix == ".gz"
+        else functools.partial(open, mode="rb")
+    )
+    if not json_extractor:
+        json_extractor = lambda x: x
+    with file_opener(json_path) as json_f:
+        for line in json_f:
+            line = line.decode("utf-8").strip().replace("\t", "\\t")
+            if line == "":
+                continue
+            record = json.loads(line)
+            if json_extractor:
+                record = json_extractor(record)
+            yield record
