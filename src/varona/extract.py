@@ -133,7 +133,10 @@ def default_vep_cli_json_extractor(response_item: dict) -> dict:
     if "nearest" not in response_item:
         new_item["gene_name"] = None
     else:
-        new_item["gene_name"] = response_item["nearest"][0]
+        try:
+            new_item["gene_name"] = response_item["nearest"][0]
+        except IndexError:
+            new_item["gene_name"] = None
     if "transcript_consequences" not in response_item:
         new_item["gene_id"] = None
         new_item["transcript_id"] = None

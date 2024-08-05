@@ -30,7 +30,7 @@ dependencies = ["httpx", "polars", "pysam"]
 
 [project.scripts]
 varona = "varona.cli:main"
-vcf_split = "varona.utils.cli_split:main"
+vcf_split = "varona.utils.cli_split:cli_main"
 
 [project.optional-dependencies]
 docs = ["sphinx", "sphinx-rtd-theme", "sphinx-multiversion"]
@@ -53,4 +53,4 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 varona = ["__VERSION__"]
-"verona.data" = ["human_g1k_v37.fasta.fai"]
+"varona.data" = ["human_g1k_v37.fasta.fai", "grch38.fasta.fai"]
