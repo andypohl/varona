@@ -7,7 +7,8 @@ import pathlib
 
 import pysam
 
-from varona.utils import misc
+from varona import ensembl
+from varona.utils import fix_vcf, misc
 
 logger = logging.getLogger("varona.utils.split")
 
@@ -15,6 +16,7 @@ logger = logging.getLogger("varona.utils.split")
 def split_vcf(
     vcf_path: pathlib.Path,
     out_dir: pathlib.Path,
+    assembly: ensembl.Assembly | None = None,
     chunk_size: int | None = None,
     n_chunks: int | None = None,
     compress: bool = True,
@@ -23,6 +25,7 @@ def split_vcf(
 
     :param vcf_path: The path to the VCF file.
     :param out_dir: The directory to save the chunks.
+    :param assembly: The genome assembly for the VCF file.
     :param chunk_size: The number of records per chunk.
     :param n_chunks: The number of chunks to split the VCF into.  If set,
         then ``chunk_size`` is ignored.
@@ -45,12 +48,17 @@ def split_vcf(
     stem = misc.multi_suffix_stem(vcf_path)
     with pysam.VariantFile(vcf_path) as in_vcf:
         records = in_vcf.fetch()
+        header = (
+            fix_vcf.vcf_header_inject_contigs(in_vcf.header, assembly)
+            if assembly
+            else in_vcf.header
+        )
         for file_ix in range(1, n_chunks + 1):
             out_path = out_dir / f"{stem}_{str(file_ix).zfill(n_zeros)}.vcf"
             with pysam.VariantFile(
                 out_path,
                 "w",
-                header=in_vcf.header,
+                header=header,
             ) as out_vcf:
                 for _ in range(chunk_size):
                     try:

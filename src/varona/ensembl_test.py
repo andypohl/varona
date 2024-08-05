@@ -234,3 +234,42 @@ class TestLiveQuerying(unittest.TestCase):
         ]
         self.assertDictEqual(data[0], expected[0])
         self.assertDictEqual(data[1], expected[1])
+
+
+class TestJsonInput(fake_vcf.TestWithTempDir):
+
+    json_lines = """\
+{"end":1158631,"start":1158631,"nearest":["SDF4"],"input":"1\t1158631\t.\tA\tG\t2965\tPASS\tBRF=0.16;FR=1.0000;HP=1;HapScore=1;MGOF=3;MMLQ=33;MQ=59.75;NF=89;NR=67;PP=2965;QD=20;SC=CACTTTCCTCATCCACTTTGA;SbPval=0.58;Source=Platypus;TC=160;TCF=90;TCR=70;TR=156;WE=1158639;WS=1158621\tGT:GL:GOF:GQ:NR:NV\t1/1:-300.0,-43.88,0.0:3:99:160:156","strand":1,"most_severe_consequence":"synonymous_variant","seq_region_name":"1","assembly_name":"GRCh37","transcript_consequences":[{"strand":-1,"cds_end":570,"protein_start":190,"cdna_end":833,"cdna_start":833,"impact":"LOW","cds_start":570,"transcript_id":"ENST00000360001","variant_allele":"G","codons":"gaT/gaC","gene_id":"ENSG00000078808","consequence_terms":["synonymous_variant"],"protein_end":190,"amino_acids":"D"}],"variant_class":"SNV","allele_string":"A/G","id":"."}
+{"nearest":["PUSL1"],"input":"1\t1246004\t.\tA\tG\t2965\tPASS\tBRF=0.09;FR=1.0000;HP=6;HapScore=1;MGOF=5;MMLQ=32;MQ=59.5;NF=101;NR=47;PP=2965;QD=20;SC=ACAGGTACGTATTTTTCCAGG;SbPval=0.62;Source=Platypus;TC=152;TCF=101;TCR=51;TR=148;WE=1246012;WS=1245994\tGT:GL:GOF:GQ:NR:NV\t1/1:-300.0,-41.24,0.0:5:99:152:148","strand":1,"most_severe_consequence":"splice_polypyrimidine_tract_variant","start":1246004,"variant_class":"SNV","allele_string":"A/G","id":".","seq_region_name":"1","assembly_name":"GRCh37","transcript_consequences":[{"variant_allele":"G","transcript_id":"ENST00000379031","strand":1,"impact":"LOW","gene_id":"ENSG00000169972","consequence_terms":["splice_polypyrimidine_tract_variant","intron_variant"]}],"end":1246004}
+{"end":1249187,"variant_class":"SNV","id":".","allele_string":"G/A","assembly_name":"GRCh37","seq_region_name":"1","transcript_consequences":[{"amino_acids":"F","protein_end":300,"gene_id":"ENSG00000127054","consequence_terms":["synonymous_variant"],"codons":"ttC/ttT","variant_allele":"A","transcript_id":"ENST00000540437","cds_start":900,"impact":"LOW","cdna_start":1356,"cdna_end":1356,"protein_start":300,"cds_end":900,"strand":-1}],"nearest":["PUSL1"],"input":"1\t1249187\t.\tG\tA\t2965\tPASS\tBRF=0.16;FR=1.0000;HP=3;HapScore=1;MGOF=3;MMLQ=34;MQ=59.72;NF=78;NR=57;PP=2965;QD=20;SC=TCCTCTGCACGAAAGTCTTGC;SbPval=0.53;Source=Platypus;TC=137;TCF=79;TCR=58;TR=135;WE=1249195;WS=1249177\tGT:GL:GOF:GQ:NR:NV\t1/1:-300.0,-37.63,0.0:3:99:137:135","strand":1,"most_severe_consequence":"synonymous_variant","start":1249187}
+"""
+
+    def test_json_uncompressed(self):
+        """Tests reading JSON lines from a plain file."""
+        json_path = self.path.with_suffix(".json")
+        with open(json_path, "w") as f:
+            f.write(self.json_lines)
+        data = list(ensembl.import_vep_data(json_path))
+        self.assertEqual(len(data), 3)
+
+    def test_json_bgzipped(self):
+        """Tests reading JSON lines from a bgzipped file."""
+        json_path = self.path.with_suffix(".json")
+        with open(json_path, "w") as f:
+            f.write(self.json_lines)
+        compressed_path = json_path.with_suffix(".json.gz")
+        pysam.tabix_compress(str(json_path), str(compressed_path))
+        data = list(ensembl.import_vep_data(compressed_path))
+        self.assertEqual(len(data), 3)
+
+    def test_platypus(self):
+        """Tests reading JSON lines from a plain file."""
+        json_path = self.path.with_suffix(".json")
+        with open(json_path, "w") as f:
+            f.write(self.json_lines)
+        data = list(
+            ensembl.import_vep_data(
+                json_path, json_extractor=extract.default_vep_cli_json_extractor
+            )
+        )
+        self.assertEqual(len(data), 3)
